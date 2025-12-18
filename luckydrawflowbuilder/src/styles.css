@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white border border-gray-100 rounded-xl shadow-md;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg border border-gray-300 transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-200 active:scale-95;
+  }
+  
+  .input-field {
+    @apply w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  }
+  
+  .component-card {
+    @apply bg-white border border-gray-200 rounded-lg p-3 hover:border-primary-400 hover:shadow-sm transition-all duration-200 cursor-pointer;
+  }
+  
+  .modal-overlay {
+    @apply fixed inset-0 z-[10000] flex items-center justify-center p-4;
+  }
+  
+  .modal-backdrop {
+    @apply absolute inset-0 bg-black/50 backdrop-blur-sm;
+  }
+  
+  .modal-content {
+    @apply relative w-full max-w-md glass-panel p-6 z-10;
+  }
+  
+  .screen-tab {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer;
+  }
+  
+  .screen-tab-active {
+    @apply bg-primary-600 text-white shadow-sm;
+  }
+  
+  .screen-tab-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+}
+
+/* Drag handle animation */
+.drag-handle {
+  @apply transition-colors duration-200;
+}
+
+.drag-handle:hover {
+  @apply text-primary-500;
+}
+
+/* JSON preview syntax highlighting */
+.json-preview {
+  @apply font-mono text-sm;
+}
+
+.json-key {
+  @apply text-blue-400;
+}
+
+.json-string {
+  @apply text-green-400;
+}
+
+.json-number {
+  @apply text-orange-400;
+}
+
+.json-boolean {
+  @apply text-purple-400;
+}

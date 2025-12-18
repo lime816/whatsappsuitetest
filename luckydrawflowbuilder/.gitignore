@@ -1,0 +1,9 @@
+node_modules
+.DS_Store
+/dist
+/.vite
+*.log
+.env
+.env.local
+# Local backend folder (using Railway deployment instead)
+/backend
