@@ -4,9 +4,9 @@ const messageLibraryService = require('../services/messageLibraryService');
 const router = express.Router();
 
 // Get all published messages
-router.get('/messages/published', (req, res) => {
+router.get('/messages/published', async (req, res) => {
   try {
-    const publishedMessages = messageLibraryService.getPublishedMessages();
+    const publishedMessages = await messageLibraryService.getPublishedMessages();
     res.json(publishedMessages);
   } catch (error) {
     console.error('Error getting published messages:', error);
@@ -15,9 +15,9 @@ router.get('/messages/published', (req, res) => {
 });
 
 // Get all messages
-router.get('/messages', (req, res) => {
+router.get('/messages', async (req, res) => {
   try {
-    const messages = messageLibraryService.messages;
+    const messages = await messageLibraryService.getAllMessages();
     res.json(messages);
   } catch (error) {
     console.error('Error getting messages:', error);
@@ -26,9 +26,9 @@ router.get('/messages', (req, res) => {
 });
 
 // Get message by ID
-router.get('/messages/:messageId', (req, res) => {
+router.get('/messages/:messageId', async (req, res) => {
   try {
-    const message = messageLibraryService.getMessageById(req.params.messageId);
+    const message = await messageLibraryService.getMessageById(req.params.messageId);
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
     }
@@ -40,9 +40,9 @@ router.get('/messages/:messageId', (req, res) => {
 });
 
 // Create new message
-router.post('/messages', (req, res) => {
+router.post('/messages', async (req, res) => {
   try {
-    const newMessage = messageLibraryService.addMessage(req.body);
+    const newMessage = await messageLibraryService.createMessage(req.body);
     res.status(201).json(newMessage);
   } catch (error) {
     console.error('Error creating message:', error);
@@ -132,9 +132,9 @@ router.post('/messages/:messageId/unpublish', (req, res) => {
 });
 
 // Get all triggers
-router.get('/triggers', (req, res) => {
+router.get('/triggers', async (req, res) => {
   try {
-    const triggers = messageLibraryService.triggers;
+    const triggers = await messageLibraryService.getAllTriggers();
     res.json(triggers);
   } catch (error) {
     console.error('Error getting triggers:', error);
@@ -165,10 +165,10 @@ router.post('/triggers', (req, res) => {
 });
 
 // Find matching triggers (for webhook processing)
-router.post('/triggers/match', (req, res) => {
+router.post('/triggers/match', async (req, res) => {
   try {
     const { messageText, phoneNumber } = req.body;
-    const matchingTriggers = messageLibraryService.findMatchingTriggers(messageText);
+    const matchingTriggers = await messageLibraryService.findMatchingTriggers(messageText);
     
     res.json({
       messageText,

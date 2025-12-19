@@ -5,6 +5,7 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
+const databaseService = require('./services/databaseService');
 const { triggerCache, sessionCache, rateLimitCache } = require('./utils/cache');
 const { apiRateLimiter } = require('./utils/rateLimiter');
 const { errorMiddleware } = require('./utils/errorHandler');
@@ -48,11 +49,12 @@ app.use('/api', (req, res, next) => {
 });
 
 // Health check endpoint with performance metrics
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
   const memoryUsage = process.memoryUsage();
+  const dbHealth = await databaseService.healthCheck();
   
   res.json({
-    status: 'healthy',
+    status: dbHealth.status === 'healthy' ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
@@ -61,6 +63,7 @@ app.get('/health', (req, res) => {
       used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
       total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`
     },
+    database: dbHealth,
     cache: {
       triggers: triggerCache.getStats(),
       sessions: sessionCache.getStats(),
@@ -171,7 +174,16 @@ app.use('*', (req, res) => {
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, async () => {
+  // Initialize database connection
+  try {
+    await databaseService.connect();
+    logger.info('Database connection established');
+  } catch (error) {
+    logger.error('Failed to connect to database:', error);
+    logger.warn('Server will continue without database (using fallback storage)');
+  }
+
   logger.info(`WhatsApp Automation Server started`, {
     host: HOST,
     port: PORT,

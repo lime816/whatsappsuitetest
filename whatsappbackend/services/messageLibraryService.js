@@ -1,17 +1,38 @@
 const { whatsappService } = require('./whatsappService');
+const databaseService = require('./databaseService');
+const logger = require('../utils/logger');
 
 // Message Library Integration Service
 class MessageLibraryService {
   constructor() {
-    // This should point to your frontend's message library API
-    // For now, we'll use in-memory storage similar to triggers
-    this.messages = [
-      // Interactive Button Messages
+    // Initialize with default messages if database is empty
+    this.initializeDefaultMessages();
+  }
+
+  async initializeDefaultMessages() {
+    try {
+      // Check if we have any message templates
+      const existingMessages = await databaseService.getMessageTemplates();
+      
+      if (existingMessages.length === 0) {
+        logger.info('Initializing default message templates...');
+        await this.seedDefaultMessages();
+      }
+    } catch (error) {
+      logger.warn('Could not initialize default messages (database may not be ready):', error.message);
+    }
+  }
+
+  // Seed default messages into database
+  async seedDefaultMessages() {
+    const defaultMessages = [
       {
         messageId: 'msg_welcome_interactive',
         name: 'Welcome - Interactive Menu',
-        type: 'interactive_button',
-        status: 'published',
+        type: 'INTERACTIVE_BUTTON',
+        status: 'PUBLISHED',
+        category: 'welcome',
+        tags: ['welcome', 'menu', 'interactive'],
         contentPayload: {
           header: 'Welcome to Hospital Services! 🏥',
           body: 'Hello! How can we assist you today? Please choose an option below:',
@@ -39,15 +60,15 @@ class MessageLibraryService {
               targetMessageId: 'msg_emergency'
             }
           ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        }
       },
       {
         messageId: 'msg_book_interactive',
         name: 'Book Appointment - Interactive',
-        type: 'interactive_button',
-        status: 'published',
+        type: 'INTERACTIVE_BUTTON',
+        status: 'PUBLISHED',
+        category: 'appointment',
+        tags: ['appointment', 'booking'],
         contentPayload: {
           header: 'Book Your Appointment 📅',
           body: 'Which type of appointment would you like to book?',
@@ -75,473 +96,207 @@ class MessageLibraryService {
               targetMessageId: 'msg_welcome_interactive'
             }
           ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_doctor_selection',
-        name: 'Doctor Selection - Interactive',
-        type: 'interactive_list',
-        status: 'published',
-        contentPayload: {
-          header: 'Available Doctors 👩‍⚕️',
-          body: 'Please select a doctor for your appointment:',
-          footer: 'All doctors are available for booking',
-          buttonText: 'Choose Doctor',
-          sections: [
-            {
-              title: 'General Physicians',
-              rows: [
-                {
-                  rowId: 'dr_sharma',
-                  title: 'Dr. Sharma',
-                  description: 'General Physician - Available Mon-Fri',
-                  triggerId: 'trigger_dr_sharma',
-                  nextAction: 'send_message',
-                  targetMessageId: 'msg_sharma_slots_interactive'
-                },
-                {
-                  rowId: 'dr_patel',
-                  title: 'Dr. Patel',
-                  description: 'General Physician - Available Tue-Sat',
-                  triggerId: 'trigger_dr_patel',
-                  nextAction: 'send_message',
-                  targetMessageId: 'msg_patel_slots_interactive'
-                }
-              ]
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_sharma_slots_interactive',
-        name: 'Dr. Sharma Slots - Interactive',
-        type: 'interactive_button',
-        status: 'published',
-        contentPayload: {
-          header: 'Dr. Sharma - Available Slots 📅',
-          body: 'Please select your preferred time slot:',
-          footer: 'Consultation fee: ₹750',
-          buttons: [
-            {
-              buttonId: 'btn_slot_930',
-              title: '🕘 Mon 9:30 AM',
-              triggerId: 'trigger_slot_930',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_confirm_appointment'
-            },
-            {
-              buttonId: 'btn_slot_4pm',
-              title: '🕐 Wed 4:00 PM',
-              triggerId: 'trigger_slot_4pm',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_confirm_appointment'
-            },
-            {
-              buttonId: 'btn_back_doctors',
-              title: '⬅️ Back to Doctors',
-              triggerId: 'trigger_back_doctors',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_doctor_selection'
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_confirm_appointment',
-        name: 'Confirm Appointment - Interactive',
-        type: 'interactive_button',
-        status: 'published',
-        contentPayload: {
-          header: 'Confirm Your Appointment ✅',
-          body: 'Appointment Details:\n👨‍⚕️ Dr. Sharma\n📅 Monday, Oct 14\n🕘 9:30 AM\n💰 Fee: ₹750\n\nWould you like to confirm and proceed to payment?',
-          footer: 'You can reschedule if needed',
-          buttons: [
-            {
-              buttonId: 'btn_confirm_pay',
-              title: '✅ Confirm & Pay',
-              triggerId: 'trigger_confirm_pay',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_payment_link'
-            },
-            {
-              buttonId: 'btn_reschedule',
-              title: '🔄 Reschedule',
-              triggerId: 'trigger_reschedule',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_sharma_slots_interactive'
-            },
-            {
-              buttonId: 'btn_cancel',
-              title: '❌ Cancel',
-              triggerId: 'trigger_cancel',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_welcome_interactive'
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_payment_link',
-        name: 'Payment Link - Interactive',
-        type: 'interactive_button',
-        status: 'published',
-        contentPayload: {
-          header: 'Payment Required 💳',
-          body: 'Please complete your payment to confirm the appointment:\n\n💰 Amount: ₹750\n🏥 Dr. Sharma Consultation\n📅 Monday, Oct 14, 9:30 AM\n\n[Payment Link: https://pay.hospital.com/abc123]',
-          footer: 'Secure payment powered by Razorpay',
-          buttons: [
-            {
-              buttonId: 'btn_payment_done',
-              title: '✅ Payment Completed',
-              triggerId: 'trigger_payment_done',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_appointment_confirmed'
-            },
-            {
-              buttonId: 'btn_payment_help',
-              title: '❓ Payment Help',
-              triggerId: 'trigger_payment_help',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_payment_support'
-            },
-            {
-              buttonId: 'btn_cancel_payment',
-              title: '❌ Cancel',
-              triggerId: 'trigger_cancel_payment',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_welcome_interactive'
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_appointment_confirmed',
-        name: 'Appointment Confirmed - Interactive',
-        type: 'interactive_button',
-        status: 'published',
-        contentPayload: {
-          header: 'Appointment Confirmed! 🎉',
-          body: 'Your appointment has been successfully booked:\n\n🎫 Token: GM-015\n👨‍⚕️ Dr. Sharma\n📅 Monday, Oct 14\n🕘 9:30 AM\n🏥 Room 201, 2nd Floor\n\nPlease arrive 15 minutes early.',
-          footer: 'Thank you for choosing our hospital',
-          buttons: [
-            {
-              buttonId: 'btn_add_calendar',
-              title: '📅 Add to Calendar',
-              triggerId: 'trigger_add_calendar',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_calendar_added'
-            },
-            {
-              buttonId: 'btn_book_another',
-              title: '➕ Book Another',
-              triggerId: 'trigger_book_another',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_book_interactive'
-            },
-            {
-              buttonId: 'btn_main_menu',
-              title: '🏠 Main Menu',
-              triggerId: 'trigger_main_menu',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_welcome_interactive'
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_lab_interactive',
-        name: 'Lab Tests - Interactive',
-        type: 'interactive_list',
-        status: 'published',
-        contentPayload: {
-          header: 'Laboratory Services 🧪',
-          body: 'Choose the type of lab test you need:',
-          footer: 'All tests include home collection option',
-          buttonText: 'Select Test',
-          sections: [
-            {
-              title: 'Common Tests',
-              rows: [
-                {
-                  rowId: 'test_blood_sugar',
-                  title: 'Blood Sugar Test',
-                  description: 'Fasting & Random - ₹200',
-                  triggerId: 'trigger_blood_sugar',
-                  nextAction: 'send_message',
-                  targetMessageId: 'msg_blood_sugar_booking'
-                },
-                {
-                  rowId: 'test_full_body',
-                  title: 'Full Body Checkup',
-                  description: 'Complete health screening - ₹1200',
-                  triggerId: 'trigger_full_body',
-                  nextAction: 'send_message',
-                  targetMessageId: 'msg_full_body_booking'
-                }
-              ]
-            },
-            {
-              title: 'Specialized Tests',
-              rows: [
-                {
-                  rowId: 'test_cardiac',
-                  title: 'Cardiac Profile',
-                  description: 'Heart health assessment - ₹800',
-                  triggerId: 'trigger_cardiac',
-                  nextAction: 'send_message',
-                  targetMessageId: 'msg_cardiac_booking'
-                }
-              ]
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        messageId: 'msg_emergency',
-        name: 'Emergency Services - Interactive',
-        type: 'interactive_button',
-        status: 'published',
-        contentPayload: {
-          header: '🚨 Emergency Services',
-          body: 'This is for medical emergencies only. If this is a life-threatening situation, please call 108 immediately.\n\nFor non-emergency urgent care, choose an option:',
-          footer: 'Emergency helpline: 108',
-          buttons: [
-            {
-              buttonId: 'btn_urgent_care',
-              title: '🏥 Urgent Care',
-              triggerId: 'trigger_urgent_care',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_urgent_care_info'
-            },
-            {
-              buttonId: 'btn_ambulance',
-              title: '🚑 Book Ambulance',
-              triggerId: 'trigger_ambulance',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_ambulance_booking'
-            },
-            {
-              buttonId: 'btn_call_emergency',
-              title: '📞 Call Emergency',
-              triggerId: 'trigger_call_emergency',
-              nextAction: 'send_message',
-              targetMessageId: 'msg_emergency_contact'
-            }
-          ]
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        }
       }
     ];
 
-    // Enhanced triggers with button support
-    this.triggers = [
-      // Button-based triggers for interactive messages
+    const defaultTriggers = [
       {
         triggerId: 'trigger_book_appointment',
-        triggerType: 'button_click',
-        triggerValue: 'btn_book_appointment',
+        triggerType: 'BUTTON_CLICK',
+        triggerValue: { buttonId: 'btn_book_appointment' },
         nextAction: 'send_message',
         targetId: 'msg_book_interactive',
-        messageId: 'msg_book_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        isActive: true
       },
-      {
-        triggerId: 'trigger_lab_tests',
-        triggerType: 'button_click',
-        triggerValue: 'btn_lab_tests',
-        nextAction: 'send_message',
-        targetId: 'msg_lab_interactive',
-        messageId: 'msg_lab_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_emergency',
-        triggerType: 'button_click',
-        triggerValue: 'btn_emergency',
-        nextAction: 'send_message',
-        targetId: 'msg_emergency',
-        messageId: 'msg_emergency',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_general_checkup',
-        triggerType: 'button_click',
-        triggerValue: 'btn_general_checkup',
-        nextAction: 'send_message',
-        targetId: 'msg_doctor_selection',
-        messageId: 'msg_doctor_selection',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_dr_sharma',
-        triggerType: 'list_selection',
-        triggerValue: 'dr_sharma',
-        nextAction: 'send_message',
-        targetId: 'msg_sharma_slots_interactive',
-        messageId: 'msg_sharma_slots_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_slot_930',
-        triggerType: 'button_click',
-        triggerValue: 'btn_slot_930',
-        nextAction: 'send_message',
-        targetId: 'msg_confirm_appointment',
-        messageId: 'msg_confirm_appointment',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_confirm_pay',
-        triggerType: 'button_click',
-        triggerValue: 'btn_confirm_pay',
-        nextAction: 'send_message',
-        targetId: 'msg_payment_link',
-        messageId: 'msg_payment_link',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_payment_done',
-        triggerType: 'button_click',
-        triggerValue: 'btn_payment_done',
-        nextAction: 'send_message',
-        targetId: 'msg_appointment_confirmed',
-        messageId: 'msg_appointment_confirmed',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_main_menu',
-        triggerType: 'button_click',
-        triggerValue: 'btn_main_menu',
-        nextAction: 'send_message',
-        targetId: 'msg_welcome_interactive',
-        messageId: 'msg_welcome_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      // Keyword-based triggers - Updated to use interactive messages
       {
         triggerId: 'trigger_hi',
-        triggerType: 'keyword_match',
-        triggerValue: ['hi', 'hello', 'hey', 'start', 'menu'],
+        triggerType: 'KEYWORD_MATCH',
+        triggerValue: { keywords: ['hi', 'hello', 'hey', 'start', 'menu'] },
         nextAction: 'send_message',
         targetId: 'msg_welcome_interactive',
-        messageId: 'msg_welcome_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        triggerId: 'trigger_help',
-        triggerType: 'keyword_match',
-        triggerValue: ['help', 'support', 'assist'],
-        nextAction: 'send_message',
-        targetId: 'msg_welcome_interactive',
-        messageId: 'msg_welcome_interactive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        isActive: true
       }
     ];
+
+    try {
+      // Create message templates
+      for (const message of defaultMessages) {
+        await databaseService.createMessageTemplate(message);
+      }
+
+      // Create triggers
+      for (const trigger of defaultTriggers) {
+        await databaseService.createTrigger(trigger);
+      }
+
+      logger.info(`Seeded ${defaultMessages.length} message templates and ${defaultTriggers.length} triggers`);
+    } catch (error) {
+      logger.error('Error seeding default messages:', error);
+    }
   }
 
   // Get all published messages
-  getPublishedMessages() {
-    return this.messages.filter(msg => msg.status === 'published');
+  async getPublishedMessages() {
+    try {
+      return await databaseService.getMessageTemplates({ status: 'PUBLISHED' });
+    } catch (error) {
+      logger.error('Error getting published messages:', error);
+      return [];
+    }
+  }
+
+  // Get all messages
+  async getAllMessages() {
+    try {
+      return await databaseService.getMessageTemplates();
+    } catch (error) {
+      logger.error('Error getting all messages:', error);
+      return [];
+    }
   }
 
   // Get message by ID
-  getMessageById(messageId) {
-    return this.messages.find(msg => msg.messageId === messageId);
+  async getMessageById(messageId) {
+    try {
+      return await databaseService.getMessageTemplateByMessageId(messageId);
+    } catch (error) {
+      logger.error('Error getting message by ID:', error);
+      return null;
+    }
   }
 
-  // Find matching triggers for a message (delegated to triggerService)
-  findMatchingTriggers(messageText) {
-    // Use the main trigger service for consistency
-    const { findMatchingTrigger } = require('./triggerService');
-    const mainTrigger = findMatchingTrigger(messageText);
-    
-    if (mainTrigger) {
-      return [mainTrigger];
+  // Create new message
+  async createMessage(messageData) {
+    try {
+      const newMessage = {
+        messageId: messageData.messageId || `msg_${Date.now()}`,
+        name: messageData.name,
+        type: messageData.type,
+        status: messageData.status || 'DRAFT',
+        contentPayload: messageData.contentPayload,
+        category: messageData.category,
+        tags: messageData.tags || []
+      };
+
+      return await databaseService.createMessageTemplate(newMessage);
+    } catch (error) {
+      logger.error('Error creating message:', error);
+      throw error;
     }
-    
-    // Fall back to interactive triggers if no main trigger found
-    const normalizedText = messageText.toLowerCase().trim();
-    return this.triggers.filter(trigger => {
-      if (trigger.triggerType === 'keyword_match') {
-        const keywords = Array.isArray(trigger.triggerValue) 
-          ? trigger.triggerValue 
-          : [trigger.triggerValue];
-        
-        return keywords.some(keyword => 
-          normalizedText.includes(keyword.toLowerCase())
-        );
-      }
-      return false;
-    });
+  }
+
+  // Update message
+  async updateMessage(id, updateData) {
+    try {
+      return await databaseService.updateMessageTemplate(id, updateData);
+    } catch (error) {
+      logger.error('Error updating message:', error);
+      throw error;
+    }
+  }
+
+  // Delete message
+  async deleteMessage(id) {
+    try {
+      return await databaseService.deleteMessageTemplate(id);
+    } catch (error) {
+      logger.error('Error deleting message:', error);
+      throw error;
+    }
+  }
+
+  // Find matching triggers for a message
+  async findMatchingTriggers(messageText) {
+    try {
+      const triggers = await databaseService.getTriggers({ isActive: true });
+      const normalizedText = messageText.toLowerCase().trim();
+      
+      const matchingTriggers = triggers.filter(trigger => {
+        if (trigger.triggerType === 'KEYWORD_MATCH') {
+          const keywords = trigger.triggerValue.keywords || [];
+          return keywords.some(keyword => 
+            normalizedText.includes(keyword.toLowerCase())
+          );
+        }
+        return false;
+      });
+
+      return matchingTriggers;
+    } catch (error) {
+      logger.error('Error finding matching triggers:', error);
+      return [];
+    }
   }
 
   // Find matching triggers for button interactions
-  findButtonTrigger(buttonId) {
-    return this.triggers.find(trigger => 
-      trigger.triggerType === 'button_click' && 
-      trigger.triggerValue === buttonId
-    );
+  async findButtonTrigger(buttonId) {
+    try {
+      const triggers = await databaseService.getTriggers({ 
+        isActive: true,
+        triggerType: 'BUTTON_CLICK'
+      });
+      
+      return triggers.find(trigger => 
+        trigger.triggerValue.buttonId === buttonId
+      );
+    } catch (error) {
+      logger.error('Error finding button trigger:', error);
+      return null;
+    }
   }
 
   // Find matching triggers for list selections
-  findListTrigger(listItemId) {
-    return this.triggers.find(trigger => 
-      trigger.triggerType === 'list_selection' && 
-      trigger.triggerValue === listItemId
-    );
+  async findListTrigger(listItemId) {
+    try {
+      const triggers = await databaseService.getTriggers({ 
+        isActive: true,
+        triggerType: 'LIST_SELECTION'
+      });
+      
+      return triggers.find(trigger => 
+        trigger.triggerValue.listItemId === listItemId
+      );
+    } catch (error) {
+      logger.error('Error finding list trigger:', error);
+      return null;
+    }
   }
 
   // Process interactive message response
-  processInteractiveResponse(interactiveData) {
-    let matchingTrigger = null;
-    
-    if (interactiveData.type === 'button_reply') {
-      matchingTrigger = this.findButtonTrigger(interactiveData.button_reply.id);
-    } else if (interactiveData.type === 'list_reply') {
-      matchingTrigger = this.findListTrigger(interactiveData.list_reply.id);
+  async processInteractiveResponse(interactiveData) {
+    try {
+      let matchingTrigger = null;
+      
+      if (interactiveData.type === 'button_reply') {
+        matchingTrigger = await this.findButtonTrigger(interactiveData.button_reply.id);
+      } else if (interactiveData.type === 'list_reply') {
+        matchingTrigger = await this.findListTrigger(interactiveData.list_reply.id);
+      }
+      
+      if (matchingTrigger) {
+        // Update trigger usage
+        await databaseService.updateTriggerUsage(matchingTrigger.id);
+        
+        const nextMessage = await this.getMessageById(matchingTrigger.targetId);
+        
+        logger.info(`Found interactive trigger: ${matchingTrigger.triggerId} for ${interactiveData.type}`);
+        return {
+          trigger: matchingTrigger,
+          nextMessage
+        };
+      }
+      
+      logger.debug('No matching trigger found for interactive response:', interactiveData);
+      return null;
+    } catch (error) {
+      logger.error('Error processing interactive response:', error);
+      return null;
     }
-    
-    if (matchingTrigger) {
-      console.log(`🎯 Found interactive trigger: ${matchingTrigger.triggerId} for ${interactiveData.type}`);
-      return {
-        trigger: matchingTrigger,
-        nextMessage: this.getMessageById(matchingTrigger.targetId)
-      };
-    }
-    
-    console.log(`📝 No matching trigger found for interactive response:`, interactiveData);
-    return null;
   }
 
   // Get button information from a message
-  getMessageButtons(messageId) {
-    const message = this.getMessageById(messageId);
+  getMessageButtons(message) {
     if (!message || !message.contentPayload.buttons) {
       return [];
     }
@@ -556,8 +311,7 @@ class MessageLibraryService {
   }
 
   // Get list options from a message
-  getMessageListOptions(messageId) {
-    const message = this.getMessageById(messageId);
+  getMessageListOptions(message) {
     if (!message || !message.contentPayload.sections) {
       return [];
     }
@@ -579,102 +333,137 @@ class MessageLibraryService {
     return options;
   }
 
-  // Send message using WhatsApp API (consolidated to use whatsappService)
+  // Send message using WhatsApp API
   async sendLibraryMessage(messageEntry, recipientPhone) {
-    console.log('📤 Sending library message:', {
-      type: messageEntry.type,
-      to: recipientPhone,
-      messageId: messageEntry.messageId
-    });
+    try {
+      logger.info('Sending library message:', {
+        type: messageEntry.type,
+        to: recipientPhone,
+        messageId: messageEntry.messageId
+      });
 
-    switch (messageEntry.type) {
-      case 'standard_text':
-        return await whatsappService.sendTextMessage(
-          recipientPhone, 
-          messageEntry.contentPayload.body
-        );
+      // Log the message attempt
+      const contact = await databaseService.getContactByPhone(recipientPhone) || 
+                     await databaseService.createContact({ phoneNumber: recipientPhone });
 
-      case 'interactive_button':
-        const payload = messageEntry.contentPayload;
-        const interactive = {
-          type: 'button',
-          body: { text: payload.body || '' },
-          action: {
-            buttons: (payload.buttons || []).slice(0, 3).map(btn => ({
-              type: 'reply',
-              reply: {
-                id: btn.buttonId || btn.id,
-                title: btn.title
-              }
-            }))
-          }
-        };
+      let result;
+      
+      switch (messageEntry.type) {
+        case 'STANDARD_TEXT':
+          result = await whatsappService.sendTextMessage(
+            recipientPhone, 
+            messageEntry.contentPayload.body
+          );
+          break;
 
-        if (payload.header) {
-          interactive.header = { type: 'text', text: payload.header };
-        }
-        if (payload.footer) {
-          interactive.footer = { text: payload.footer };
-        }
-
-        return await whatsappService.sendInteractiveMessage(recipientPhone, interactive);
-
-      case 'interactive_list':
-        const listPayload = messageEntry.contentPayload;
-        const listInteractive = {
-          type: 'list',
-          body: { text: listPayload.body || '' },
-          action: {
-            button: listPayload.buttonText || 'View Options',
-            sections: (listPayload.sections || []).map(section => ({
-              title: section.title,
-              rows: (section.rows || []).map(row => ({
-                id: row.rowId || row.id,
-                title: row.title,
-                description: row.description
+        case 'INTERACTIVE_BUTTON':
+          const payload = messageEntry.contentPayload;
+          const interactive = {
+            type: 'button',
+            body: { text: payload.body || '' },
+            action: {
+              buttons: (payload.buttons || []).slice(0, 3).map(btn => ({
+                type: 'reply',
+                reply: {
+                  id: btn.buttonId || btn.id,
+                  title: btn.title
+                }
               }))
-            }))
+            }
+          };
+
+          if (payload.header) {
+            interactive.header = { type: 'text', text: payload.header };
           }
-        };
+          if (payload.footer) {
+            interactive.footer = { text: payload.footer };
+          }
 
-        if (listPayload.header) {
-          listInteractive.header = { type: 'text', text: listPayload.header };
-        }
-        if (listPayload.footer) {
-          listInteractive.footer = { text: listPayload.footer };
-        }
+          result = await whatsappService.sendInteractiveMessage(recipientPhone, interactive);
+          break;
 
-        return await whatsappService.sendInteractiveMessage(recipientPhone, listInteractive);
+        case 'INTERACTIVE_LIST':
+          const listPayload = messageEntry.contentPayload;
+          const listInteractive = {
+            type: 'list',
+            body: { text: listPayload.body || '' },
+            action: {
+              button: listPayload.buttonText || 'View Options',
+              sections: (listPayload.sections || []).map(section => ({
+                title: section.title,
+                rows: (section.rows || []).map(row => ({
+                  id: row.rowId || row.id,
+                  title: row.title,
+                  description: row.description
+                }))
+              }))
+            }
+          };
 
-      default:
-        throw new Error(`Unsupported message type: ${messageEntry.type}`);
+          if (listPayload.header) {
+            listInteractive.header = { type: 'text', text: listPayload.header };
+          }
+          if (listPayload.footer) {
+            listInteractive.footer = { text: listPayload.footer };
+          }
+
+          result = await whatsappService.sendInteractiveMessage(recipientPhone, listInteractive);
+          break;
+
+        default:
+          throw new Error(`Unsupported message type: ${messageEntry.type}`);
+      }
+
+      // Log the successful message
+      if (result.success) {
+        await databaseService.createMessageLog({
+          contactId: contact.id,
+          messageTemplateId: messageEntry.id,
+          whatsappMessageId: result.messageId,
+          messageType: messageEntry.type,
+          content: messageEntry.contentPayload,
+          status: 'SENT'
+        });
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Error sending library message:', error);
+      throw error;
     }
   }
 
-  // Add a new message (for API integration)
-  addMessage(messageData) {
-    const newMessage = {
-      messageId: `msg_${Date.now()}`,
-      ...messageData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.messages.push(newMessage);
-    return newMessage;
+  // Create trigger
+  async createTrigger(triggerData) {
+    try {
+      const newTrigger = {
+        triggerId: triggerData.triggerId || `trigger_${Date.now()}`,
+        triggerType: triggerData.triggerType,
+        triggerValue: triggerData.triggerValue,
+        nextAction: triggerData.nextAction,
+        targetId: triggerData.targetId,
+        messageTemplateId: triggerData.messageTemplateId,
+        flowId: triggerData.flowId,
+        isActive: triggerData.isActive ?? true,
+        priority: triggerData.priority ?? 0,
+        conditions: triggerData.conditions
+      };
+      
+      return await databaseService.createTrigger(newTrigger);
+    } catch (error) {
+      logger.error('Error creating trigger:', error);
+      throw error;
+    }
   }
 
-  // Add a new trigger (for API integration)
-  addTrigger(triggerData) {
-    const newTrigger = {
-      triggerId: `trigger_${Date.now()}`,
-      ...triggerData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.triggers.push(newTrigger);
-    return newTrigger;
+  // Get all triggers
+  async getAllTriggers() {
+    try {
+      return await databaseService.getTriggers();
+    } catch (error) {
+      logger.error('Error getting all triggers:', error);
+      return [];
+    }
   }
 }
 

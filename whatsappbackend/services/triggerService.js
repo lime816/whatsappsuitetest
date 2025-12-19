@@ -1,200 +1,146 @@
 const logger = require('../utils/logger');
 const { triggerCache } = require('../utils/cache');
-
-// In-memory storage for triggers (use a database in production)
-let triggers = [
-  {
-    id: '1',
-    keyword: 'hello',
-    flowId: 'your_flow_id_here',
-    message: 'Hello! Please complete this form:',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    usageCount: 0,
-    lastUsed: null
-  },
-  {
-    id: '2',
-    keyword: 'start',
-    flowId: 'your_onboarding_flow_id',
-    message: 'Welcome! Let\'s get you started:',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    usageCount: 0,
-    lastUsed: null
-  },
-  {
-    id: '3',
-    keyword: 'contact',
-    flowId: 'your_contact_flow_id',
-    message: 'Please share your contact details:',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    usageCount: 0,
-    lastUsed: null
-  },
-  {
-    id: '4',
-    keyword: 'feedback',
-    flowId: 'your_feedback_flow_id',
-    message: 'We\'d love to hear your feedback:',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    usageCount: 0,
-    lastUsed: null
-  }
-];
-
-// Create trigger lookup index for faster matching
-let triggerIndex = new Map();
-let indexLastUpdated = 0;
-
-function updateTriggerIndex() {
-  const now = Date.now();
-  
-  // Only rebuild index if triggers have been modified
-  if (now - indexLastUpdated < 60000) { // 1 minute cache
-    return;
-  }
-  
-  triggerIndex.clear();
-  
-  // Sort triggers by usage count (most used first) for better performance
-  const sortedTriggers = [...triggers]
-    .filter(t => t.isActive)
-    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
-  
-  for (const trigger of sortedTriggers) {
-    const keyword = trigger.keyword.toLowerCase();
-    if (!triggerIndex.has(keyword)) {
-      triggerIndex.set(keyword, []);
-    }
-    triggerIndex.get(keyword).push(trigger);
-  }
-  
-  indexLastUpdated = now;
-  logger.debug(`Trigger index updated: ${triggerIndex.size} keywords indexed`);
-}
+const databaseService = require('./databaseService');
 
 /**
  * Get all triggers
  */
-function getAllTriggers() {
-  return triggers.map(trigger => ({
-    ...trigger,
-    matchCount: trigger.usageCount || 0,
-    lastUsed: trigger.lastUsed
-  }));
+async function getAllTriggers() {
+  try {
+    const triggers = await databaseService.getTriggers();
+    return triggers.map(trigger => ({
+      ...trigger,
+      matchCount: trigger.usageCount || 0,
+      lastUsed: trigger.lastUsed
+    }));
+  } catch (error) {
+    logger.error('Error getting all triggers:', error);
+    return [];
+  }
 }
 
 /**
  * Create a new trigger
  */
-function createTrigger(triggerData) {
-  const newTrigger = {
-    id: Date.now().toString(),
-    keyword: triggerData.keyword.toLowerCase().trim(),
-    flowId: triggerData.flowId,
-    message: triggerData.message || 'Please complete this form:',
-    isActive: triggerData.isActive !== false, // Default to true
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+async function createTrigger(triggerData) {
+  try {
+    // Validate required fields
+    if (!triggerData.keyword || !triggerData.flowId) {
+      throw new Error('Keyword and flowId are required');
+    }
 
-  // Validate required fields
-  if (!newTrigger.keyword || !newTrigger.flowId) {
-    throw new Error('Keyword and flowId are required');
+    // Check for duplicate keywords
+    const existingTriggers = await databaseService.getTriggers({ isActive: true });
+    const existingTrigger = existingTriggers.find(t => {
+      if (t.triggerType === 'KEYWORD_MATCH') {
+        const keywords = t.triggerValue.keywords || [];
+        return keywords.some(k => k.toLowerCase() === triggerData.keyword.toLowerCase());
+      }
+      return false;
+    });
+    
+    if (existingTrigger) {
+      throw new Error(`Trigger with keyword "${triggerData.keyword}" already exists`);
+    }
+
+    const newTrigger = {
+      triggerId: `trigger_${Date.now()}`,
+      triggerType: 'KEYWORD_MATCH',
+      triggerValue: { keywords: [triggerData.keyword.toLowerCase().trim()] },
+      nextAction: 'send_flow',
+      flowId: triggerData.flowId,
+      isActive: triggerData.isActive !== false,
+      priority: 0
+    };
+
+    const createdTrigger = await databaseService.createTrigger(newTrigger);
+    
+    // Clear cache
+    triggerCache.clear();
+    
+    logger.info(`Created new trigger: "${triggerData.keyword}"`, {
+      flowId: triggerData.flowId,
+      triggerId: createdTrigger.triggerId
+    });
+    
+    return createdTrigger;
+  } catch (error) {
+    logger.error('Error creating trigger:', error);
+    throw error;
   }
-
-  // Check for duplicate keywords
-  const existingTrigger = triggers.find(t => 
-    t.keyword.toLowerCase() === newTrigger.keyword.toLowerCase()
-  );
-  
-  if (existingTrigger) {
-    throw new Error(`Trigger with keyword "${newTrigger.keyword}" already exists`);
-  }
-
-  triggers.push(newTrigger);
-  
-  // Invalidate cache
-  indexLastUpdated = 0;
-  triggerCache.clear();
-  
-  logger.info(`Created new trigger: "${newTrigger.keyword}"`, {
-    flowId: newTrigger.flowId,
-    triggerId: newTrigger.id
-  });
-  
-  return newTrigger;
 }
 
 /**
  * Update an existing trigger
  */
-function updateTrigger(id, updates) {
-  const index = triggers.findIndex(t => t.id === id);
-  
-  if (index === -1) {
-    return null;
-  }
-
-  // Validate keyword uniqueness if keyword is being updated
-  if (updates.keyword) {
-    const normalizedKeyword = updates.keyword.toLowerCase().trim();
-    const existingTrigger = triggers.find(t => 
-      t.id !== id && t.keyword.toLowerCase() === normalizedKeyword
-    );
-    
-    if (existingTrigger) {
-      throw new Error(`Trigger with keyword "${normalizedKeyword}" already exists`);
+async function updateTrigger(id, updates) {
+  try {
+    // Validate keyword uniqueness if keyword is being updated
+    if (updates.keyword) {
+      const normalizedKeyword = updates.keyword.toLowerCase().trim();
+      const existingTriggers = await databaseService.getTriggers({ isActive: true });
+      const existingTrigger = existingTriggers.find(t => 
+        t.id !== id && 
+        t.triggerType === 'KEYWORD_MATCH' &&
+        t.triggerValue.keywords?.includes(normalizedKeyword)
+      );
+      
+      if (existingTrigger) {
+        throw new Error(`Trigger with keyword "${normalizedKeyword}" already exists`);
+      }
+      
+      // Update the trigger value with new keyword
+      updates.triggerValue = { keywords: [normalizedKeyword] };
+      delete updates.keyword; // Remove keyword from updates as it's now in triggerValue
     }
+
+    const updatedTrigger = await databaseService.updateTrigger(id, updates);
+
+    if (!updatedTrigger) {
+      return null;
+    }
+
+    // Clear cache
+    triggerCache.clear();
+
+    logger.info(`Updated trigger ${id}`, { updates });
     
-    updates.keyword = normalizedKeyword;
+    return updatedTrigger;
+  } catch (error) {
+    logger.error('Error updating trigger:', error);
+    throw error;
   }
-
-  triggers[index] = {
-    ...triggers[index],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-
-  // Invalidate cache
-  indexLastUpdated = 0;
-  triggerCache.clear();
-
-  logger.info(`Updated trigger ${id}`, { updates });
-  
-  return triggers[index];
 }
 
 /**
  * Delete a trigger
  */
-function deleteTrigger(id) {
-  const index = triggers.findIndex(t => t.id === id);
-  
-  if (index === -1) {
+async function deleteTrigger(id) {
+  try {
+    const deletedTrigger = await databaseService.deleteTrigger(id);
+    
+    if (!deletedTrigger) {
+      return false;
+    }
+
+    // Clear cache
+    triggerCache.clear();
+    
+    logger.info(`Deleted trigger: ${deletedTrigger.triggerId}`, {
+      triggerId: deletedTrigger.id
+    });
+    
+    return true;
+  } catch (error) {
+    logger.error('Error deleting trigger:', error);
     return false;
   }
-
-  const deletedTrigger = triggers.splice(index, 1)[0];
-  
-  // Invalidate cache
-  indexLastUpdated = 0;
-  triggerCache.clear();
-  
-  logger.info(`Deleted trigger: "${deletedTrigger.keyword}"`, {
-    triggerId: deletedTrigger.id
-  });
-  
-  return true;
 }
 
 /**
  * Find matching trigger for a message
  */
-function findMatchingTrigger(messageText) {
+async function findMatchingTrigger(messageText) {
   const normalizedMessage = messageText.toLowerCase().trim();
   
   // Check cache first
@@ -204,64 +150,62 @@ function findMatchingTrigger(messageText) {
   if (cachedResult !== null) {
     if (cachedResult) {
       // Update usage stats
-      updateTriggerUsage(cachedResult.id);
-      logger.debug(`Trigger cache hit: "${cachedResult.keyword}"`);
+      await updateTriggerUsage(cachedResult.id);
+      logger.debug(`Trigger cache hit: "${cachedResult.triggerId}"`);
     }
     return cachedResult;
   }
   
-  // Update trigger index if needed
-  updateTriggerIndex();
-  
-  // Try exact match first (fastest)
-  if (triggerIndex.has(normalizedMessage)) {
-    const exactMatches = triggerIndex.get(normalizedMessage);
-    if (exactMatches.length > 0) {
-      const trigger = exactMatches[0];
-      updateTriggerUsage(trigger.id);
+  try {
+    // Get active triggers from database
+    const triggers = await databaseService.getTriggers({ 
+      isActive: true,
+      triggerType: 'KEYWORD_MATCH'
+    });
+    
+    // Try exact match first (fastest)
+    let matchingTrigger = triggers.find(trigger => {
+      const keywords = trigger.triggerValue.keywords || [];
+      return keywords.some(keyword => keyword === normalizedMessage);
+    });
+    
+    // Fall back to substring matching (slower)
+    if (!matchingTrigger) {
+      matchingTrigger = triggers.find(trigger => {
+        const keywords = trigger.triggerValue.keywords || [];
+        return keywords.some(keyword => normalizedMessage.includes(keyword));
+      });
+    }
+    
+    if (matchingTrigger) {
+      await updateTriggerUsage(matchingTrigger.id);
       
       // Cache the result
-      triggerCache.set(cacheKey, trigger, 300); // 5 minutes
+      triggerCache.set(cacheKey, matchingTrigger, 300); // 5 minutes
       
-      logger.debug(`Exact trigger match: "${trigger.keyword}"`);
-      return trigger;
+      logger.debug(`Trigger match found: "${matchingTrigger.triggerId}"`);
+      return matchingTrigger;
     }
-  }
-  
-  // Fall back to substring matching (slower)
-  for (const [keyword, triggerList] of triggerIndex.entries()) {
-    if (normalizedMessage.includes(keyword)) {
-      const trigger = triggerList[0]; // First (most used) trigger
-      updateTriggerUsage(trigger.id);
-      
-      // Cache the result
-      triggerCache.set(cacheKey, trigger, 300);
-      
-      logger.debug(`Substring trigger match: "${trigger.keyword}"`);
-      return trigger;
-    }
-  }
 
-  // Cache negative result to avoid repeated lookups
-  triggerCache.set(cacheKey, null, 60); // 1 minute for negative results
-  
-  logger.debug(`No matching trigger found for: "${messageText}"`);
-  return null;
+    // Cache negative result to avoid repeated lookups
+    triggerCache.set(cacheKey, null, 60); // 1 minute for negative results
+    
+    logger.debug(`No matching trigger found for: "${messageText}"`);
+    return null;
+  } catch (error) {
+    logger.error('Error finding matching trigger:', error);
+    return null;
+  }
 }
 
 /**
  * Update trigger usage statistics
  */
-function updateTriggerUsage(triggerId) {
-  const trigger = triggers.find(t => t.id === triggerId);
-  if (trigger) {
-    trigger.usageCount = (trigger.usageCount || 0) + 1;
-    trigger.lastUsed = new Date().toISOString();
-    
-    // Invalidate index to resort by usage
-    if (trigger.usageCount % 10 === 0) { // Every 10 uses
-      indexLastUpdated = 0;
-    }
+async function updateTriggerUsage(triggerId) {
+  try {
+    await databaseService.updateTriggerUsage(triggerId);
+  } catch (error) {
+    logger.error('Error updating trigger usage:', error);
   }
 }
 
@@ -269,40 +213,49 @@ function updateTriggerUsage(triggerId) {
  * Test trigger matching without actually sending
  */
 async function testTrigger(message, phoneNumber) {
-  const { simulateWebhook } = require('./webhookService');
-  
-  logger.debug(`Testing trigger with message: "${message}"`);
-  
-  const matchingTrigger = findMatchingTrigger(message);
-  
-  const result = {
-    message,
-    phoneNumber,
-    matchingTrigger: matchingTrigger ? {
-      id: matchingTrigger.id,
-      keyword: matchingTrigger.keyword,
-      flowId: matchingTrigger.flowId,
-      message: matchingTrigger.message
-    } : null,
-    allActiveTriggers: triggers.filter(t => t.isActive).map(t => ({
-      keyword: t.keyword,
-      flowId: t.flowId
-    })),
-    timestamp: new Date().toISOString()
-  };
+  try {
+    const { simulateWebhook } = require('./webhookService');
+    
+    logger.debug(`Testing trigger with message: "${message}"`);
+    
+    const matchingTrigger = await findMatchingTrigger(message);
+    const allActiveTriggers = await databaseService.getTriggers({ isActive: true });
+    
+    const result = {
+      message,
+      phoneNumber,
+      matchingTrigger: matchingTrigger ? {
+        id: matchingTrigger.id,
+        triggerId: matchingTrigger.triggerId,
+        triggerType: matchingTrigger.triggerType,
+        triggerValue: matchingTrigger.triggerValue,
+        flowId: matchingTrigger.flowId
+      } : null,
+      allActiveTriggers: allActiveTriggers.map(t => ({
+        triggerId: t.triggerId,
+        triggerType: t.triggerType,
+        triggerValue: t.triggerValue,
+        flowId: t.flowId
+      })),
+      timestamp: new Date().toISOString()
+    };
 
-  // Simulate the full webhook flow
-  if (matchingTrigger) {
-    try {
-      await simulateWebhook(message, phoneNumber);
-      result.simulationResult = 'success';
-    } catch (error) {
-      result.simulationResult = 'error';
-      result.simulationError = error.message;
+    // Simulate the full webhook flow
+    if (matchingTrigger) {
+      try {
+        await simulateWebhook(message, phoneNumber);
+        result.simulationResult = 'success';
+      } catch (error) {
+        result.simulationResult = 'error';
+        result.simulationError = error.message;
+      }
     }
-  }
 
-  return result;
+    return result;
+  } catch (error) {
+    logger.error('Error testing trigger:', error);
+    throw error;
+  }
 }
 
 module.exports = {

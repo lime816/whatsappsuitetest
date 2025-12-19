@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User/Contact Management
+model Contact {
+  id          String   @id @default(cuid())
+  phoneNumber String   @unique @map("phone_number")
+  name        String?
+  email       String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sessions    Session[]
+  messages    MessageLog[]
+  formSubmissions FormSubmission[]
+
+  @@map("contacts")
+}
+
+// Session Management for conversation tracking
+model Session {
+  id            String   @id @default(cuid())
+  contactId     String   @map("contact_id")
+  lastTrigger   String?  @map("last_trigger")
+  lastActivity  DateTime @map("last_activity")
+  messageCount  Int      @default(0) @map("message_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  sessionData   Json?    @map("session_data") // Store additional session context
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// Message Library - Template messages
+model MessageTemplate {
+  id             String            @id @default(cuid())
+  messageId      String            @unique @map("message_id") // Custom ID for referencing
+  name           String
+  type           MessageType
+  status         MessageStatus     @default(DRAFT)
+  contentPayload Json              @map("content_payload") // Store message content as JSON
+  category       String?           // For organizing messages
+  tags           String[]          @default([]) // For filtering/searching
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  triggers       Trigger[]
+  messageLogs    MessageLog[]
+
+  @@map("message_templates")
+}
+
+// Triggers for automated responses
+model Trigger {
+  id               String      @id @default(cuid())
+  triggerId        String      @unique @map("trigger_id") // Custom ID for referencing
+  triggerType      TriggerType @map("trigger_type")
+  triggerValue     Json        @map("trigger_value") // Store keywords/button IDs as JSON
+  nextAction       String      @map("next_action")
+  targetId         String?     @map("target_id") // Reference to message or flow
+  messageTemplateId String?    @map("message_template_id")
+  flowId           String?     @map("flow_id") // WhatsApp Flow ID
+  isActive         Boolean     @default(true) @map("is_active")
+  usageCount       Int         @default(0) @map("usage_count")
+  lastUsed         DateTime?   @map("last_used")
+  priority         Int         @default(0) // For trigger ordering
+  conditions       Json?       // Additional conditions for trigger activation
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  messageTemplate MessageTemplate? @relation(fields: [messageTemplateId], references: [id], onDelete: SetNull)
+
+  @@map("triggers")
+}
+
+// WhatsApp Flow Management
+model Flow {
+  id          String     @id @default(cuid())
+  flowId      String     @unique @map("flow_id") // WhatsApp Flow ID
+  name        String
+  description String?
+  version     String?
+  status      FlowStatus @default(DRAFT)
+  flowData    Json?      @map("flow_data") // Store flow configuration
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  formSubmissions FormSubmission[]
+
+  @@map("flows")
+}
+
+// Form Submissions from WhatsApp Flows
+model FormSubmission {
+  id        String   @id @default(cuid())
+  contactId String   @map("contact_id")
+  flowId    String   @map("flow_id")
+  formData  Json     @map("form_data") // Store submitted form data
+  status    String   @default("completed")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  flow    Flow    @relation(fields: [flowId], references: [flowId], onDelete: Cascade)
+
+  @@map("form_submissions")
+}
+
+// Message Logs for tracking sent messages
+model MessageLog {
+  id                String           @id @default(cuid())
+  contactId         String           @map("contact_id")
+  messageTemplateId String?          @map("message_template_id")
+  whatsappMessageId String?          @map("whatsapp_message_id") // WhatsApp's message ID
+  messageType       String           @map("message_type")
+  content           Json?            // Store message content
+  status            MessageLogStatus @default(SENT)
+  errorMessage      String?          @map("error_message")
+  deliveredAt       DateTime?        @map("delivered_at")
+  readAt            DateTime?        @map("read_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  contact         Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  messageTemplate MessageTemplate? @relation(fields: [messageTemplateId], references: [id], onDelete: SetNull)
+
+  @@map("message_logs")
+}
+
+// Webhook Events for debugging and monitoring
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  eventType String   @map("event_type")
+  payload   Json     // Store webhook payload
+  processed Boolean  @default(false)
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("webhook_events")
+}
+
+// System Configuration
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
+
+// Analytics and Metrics
+model Analytics {
+  id          String   @id @default(cuid())
+  metricType  String   @map("metric_type") // e.g., "message_sent", "trigger_activated"
+  metricValue Json     @map("metric_value") // Store metric data
+  timestamp   DateTime @default(now())
+  metadata    Json?    // Additional context
+
+  @@map("analytics")
+}
+
+// Enums
+enum MessageType {
+  STANDARD_TEXT     @map("standard_text")
+  INTERACTIVE_BUTTON @map("interactive_button")
+  INTERACTIVE_LIST  @map("interactive_list")
+  MEDIA            @map("media")
+  DOCUMENT         @map("document")
+  TEMPLATE         @map("template")
+}
+
+enum MessageStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+  ARCHIVED  @map("archived")
+}
+
+enum TriggerType {
+  KEYWORD_MATCH   @map("keyword_match")
+  BUTTON_CLICK    @map("button_click")
+  LIST_SELECTION  @map("list_selection")
+  FLOW_COMPLETION @map("flow_completion")
+  SCHEDULED       @map("scheduled")
+}
+
+enum FlowStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+  ARCHIVED  @map("archived")
+}
+
+enum MessageLogStatus {
+  SENT        @map("sent")
+  DELIVERED   @map("delivered")
+  READ        @map("read")
+  FAILED      @map("failed")
+  UNDELIVERED @map("undelivered")
+}

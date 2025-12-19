@@ -1,5 +1,6 @@
 const { sendTextMessage, sendFlowMessage } = require('./whatsappService');
 const { findMatchingTrigger } = require('./triggerService');
+const databaseService = require('./databaseService');
 const logger = require('../utils/logger');
 const { sessionCache } = require('../utils/cache');
 const messageQueue = require('../utils/messageQueue');
@@ -15,6 +16,17 @@ async function processWebhookPayload(payload) {
 
   const startTime = Date.now();
   let messagesProcessed = 0;
+
+  // Log webhook event for debugging
+  try {
+    await databaseService.createWebhookEvent({
+      eventType: 'incoming_webhook',
+      payload: payload,
+      processed: false
+    });
+  } catch (error) {
+    logger.warn('Could not log webhook event:', error.message);
+  }
 
   for (const entry of payload.entry) {
     for (const change of entry.changes) {
@@ -63,6 +75,15 @@ async function handleIncomingMessage(message) {
       messageId: message.id
     });
 
+    // Get or create contact
+    let contact = await databaseService.getContactByPhone(message.from);
+    if (!contact) {
+      contact = await databaseService.createContact({
+        phoneNumber: message.from,
+        isActive: true
+      });
+    }
+
     // Extract message text
     let messageText = '';
     if (message.type === 'text' && message.text) {
@@ -75,33 +96,54 @@ async function handleIncomingMessage(message) {
       return;
     }
 
-    // Check for existing conversation session
-    const sessionKey = `session:${message.from}`;
-    let session = sessionCache.get(sessionKey);
+    // Update or create session
+    let session = await databaseService.getActiveSession(contact.id);
+    if (session) {
+      await databaseService.updateSession(contact.id, {
+        messageCount: session.messageCount + 1
+      });
+    } else {
+      await databaseService.createSession({
+        contactId: contact.id,
+        messageCount: 1
+      });
+    }
 
     // Try to find matching trigger
-    const matchingTrigger = findMatchingTrigger(messageText);
+    const matchingTrigger = await findMatchingTrigger(messageText);
     
     if (matchingTrigger) {
-      logger.trigger(`Found matching trigger: "${matchingTrigger.keyword}"`, {
+      logger.info(`Found matching trigger: "${matchingTrigger.triggerId}"`, {
         flowId: matchingTrigger.flowId,
         phoneNumber: message.from
       });
       
-      // Queue flow message instead of sending immediately
-      messageQueue.add({
-        type: 'flow',
-        phoneNumber: message.from,
-        flowId: matchingTrigger.flowId,
-        text: matchingTrigger.message
-      }, 'high'); // High priority for user interactions
+      // Update session with trigger info
+      await databaseService.updateSession(contact.id, {
+        lastTrigger: matchingTrigger.triggerId
+      });
 
-      // Update session
-      sessionCache.set(sessionKey, {
-        lastTrigger: matchingTrigger.keyword,
-        lastActivity: Date.now(),
-        messageCount: (session?.messageCount || 0) + 1
-      }, 72000); // 20 hours
+      // Queue appropriate response based on trigger action
+      if (matchingTrigger.nextAction === 'send_flow' && matchingTrigger.flowId) {
+        messageQueue.add({
+          type: 'flow',
+          phoneNumber: message.from,
+          flowId: matchingTrigger.flowId,
+          text: matchingTrigger.message || 'Please complete this form:'
+        }, 'high');
+      } else if (matchingTrigger.nextAction === 'send_message' && matchingTrigger.targetId) {
+        // Get message template and send it
+        const messageLibraryService = require('./messageLibraryService');
+        const targetMessage = await messageLibraryService.getMessageById(matchingTrigger.targetId);
+        
+        if (targetMessage) {
+          messageQueue.add({
+            type: 'library_message',
+            phoneNumber: message.from,
+            messageTemplate: targetMessage
+          }, 'high');
+        }
+      }
 
       return;
     }
@@ -144,21 +186,24 @@ async function handleInteractiveMessage(message) {
       type: message.interactive?.type
     });
 
+    // Get or create contact
+    let contact = await databaseService.getContactByPhone(message.from);
+    if (!contact) {
+      contact = await databaseService.createContact({
+        phoneNumber: message.from,
+        isActive: true
+      });
+    }
+
     // Handle flow completion responses
     if (message.interactive && message.interactive.nfm_reply) {
-      await handleFlowCompletion(message);
+      await handleFlowCompletion(message, contact);
       return;
     }
 
-    // Handle button clicks
-    if (message.interactive && message.interactive.button_reply) {
-      await handleButtonClick(message);
-      return;
-    }
-
-    // Handle list selections
-    if (message.interactive && message.interactive.list_reply) {
-      await handleListSelection(message);
+    // Handle button clicks and list selections
+    if (message.interactive && (message.interactive.button_reply || message.interactive.list_reply)) {
+      await handleInteractiveResponse(message, contact);
       return;
     }
 
@@ -173,13 +218,21 @@ async function handleInteractiveMessage(message) {
 /**
  * Handle WhatsApp Flow completion
  */
-async function handleFlowCompletion(message) {
+async function handleFlowCompletion(message, contact) {
   try {
     const phoneNumber = message.from;
     const flowResponse = JSON.parse(message.interactive.nfm_reply.response_json);
     
     logger.info(`Flow completed by ${phoneNumber}`, {
       formFields: Object.keys(flowResponse).length
+    });
+
+    // Save form submission to database
+    await databaseService.createFormSubmission({
+      contactId: contact.id,
+      flowId: message.interactive.nfm_reply.flow_id || 'unknown',
+      formData: flowResponse,
+      status: 'completed'
     });
     
     // Queue confirmation message
@@ -189,8 +242,15 @@ async function handleFlowCompletion(message) {
       text: 'Thank you! Your form has been submitted successfully. We will get back to you soon.'
     }, 'high');
 
-    // Process form data asynchronously
-    setImmediate(() => processFormData(phoneNumber, flowResponse));
+    // Log analytics
+    await databaseService.createAnalyticsEntry({
+      metricType: 'flow_completed',
+      metricValue: {
+        flowId: message.interactive.nfm_reply.flow_id,
+        phoneNumber: phoneNumber,
+        fieldCount: Object.keys(flowResponse).length
+      }
+    });
 
   } catch (error) {
     logger.error('Error handling flow completion:', {
@@ -201,70 +261,39 @@ async function handleFlowCompletion(message) {
 }
 
 /**
- * Handle button clicks
+ * Handle interactive responses (buttons/lists)
  */
-async function handleButtonClick(message) {
-  const buttonId = message.interactive.button_reply.id;
-  const phoneNumber = message.from;
-  
-  logger.debug(`Button clicked: ${buttonId}`, { phoneNumber });
-  
-  // Queue response message
-  messageQueue.add({
-    type: 'text',
-    phoneNumber: phoneNumber,
-    text: `You clicked: ${buttonId}. Thank you for your response!`
-  }, 'high');
-}
-
-/**
- * Handle list selections
- */
-async function handleListSelection(message) {
-  const listItemId = message.interactive.list_reply.id;
-  const listItemTitle = message.interactive.list_reply.title;
-  const phoneNumber = message.from;
-  
-  logger.debug(`List item selected: ${listItemId}`, { 
-    title: listItemTitle,
-    phoneNumber 
-  });
-  
-  // Queue response message
-  messageQueue.add({
-    type: 'text',
-    phoneNumber: phoneNumber,
-    text: `You selected: ${listItemTitle}. Thank you for your choice!`
-  }, 'high');
-}
-
-/**
- * Process form data from flow completion
- */
-async function processFormData(phoneNumber, formData) {
+async function handleInteractiveResponse(message, contact) {
   try {
-    logger.info(`Processing form data for ${phoneNumber}`, {
-      fieldCount: Object.keys(formData).length
-    });
+    const messageLibraryService = require('./messageLibraryService');
+    const result = await messageLibraryService.processInteractiveResponse(message.interactive);
     
-    // Add your custom form processing logic here
-    // Examples:
-    // - Save to database
-    // - Send email notifications
-    // - Trigger other workflows
-    // - Update CRM systems
-    
-    // Store in session cache for potential follow-up
-    const sessionKey = `form:${phoneNumber}:${Date.now()}`;
-    sessionCache.set(sessionKey, formData, 72000); // Store for 20 hours
-    
-    logger.info('Form data processed successfully', { phoneNumber });
-    
+    if (result && result.nextMessage) {
+      // Send the next message automatically
+      messageQueue.add({
+        type: 'library_message',
+        phoneNumber: message.from,
+        messageTemplate: result.nextMessage
+      }, 'high');
+
+      // Update session
+      await databaseService.updateSession(contact.id, {
+        lastTrigger: result.trigger.triggerId
+      });
+
+      logger.info(`Interactive response processed: ${result.trigger.triggerId}`);
+    } else {
+      logger.debug('No matching trigger found for interactive response');
+      
+      // Send default response
+      messageQueue.add({
+        type: 'text',
+        phoneNumber: message.from,
+        text: 'Thank you for your response!'
+      }, 'normal');
+    }
   } catch (error) {
-    logger.error('Error processing form data:', {
-      error: error.message,
-      phoneNumber
-    });
+    logger.error('Error handling interactive response:', error);
   }
 }
 
@@ -287,17 +316,26 @@ Thank you for reaching out!`;
 /**
  * Handle message status updates
  */
-function handleMessageStatus(status) {
-  // Only log important status updates in production
-  if (status.status === 'failed' || status.status === 'undelivered') {
-    logger.warn(`Message status: ${status.status}`, {
-      messageId: status.id,
-      recipient: status.recipient_id
-    });
-  } else {
-    logger.verbose(`Message status: ${status.status}`, {
-      messageId: status.id
-    });
+async function handleMessageStatus(status) {
+  try {
+    // Update message log status in database
+    if (status.id) {
+      await databaseService.updateMessageLogStatus(status.id, status.status.toUpperCase());
+    }
+
+    // Only log important status updates in production
+    if (status.status === 'failed' || status.status === 'undelivered') {
+      logger.warn(`Message status: ${status.status}`, {
+        messageId: status.id,
+        recipient: status.recipient_id
+      });
+    } else {
+      logger.verbose(`Message status: ${status.status}`, {
+        messageId: status.id
+      });
+    }
+  } catch (error) {
+    logger.error('Error handling message status:', error);
   }
 }
 
