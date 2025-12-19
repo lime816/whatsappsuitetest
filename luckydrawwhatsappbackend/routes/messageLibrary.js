@@ -1,6 +1,5 @@
 const express = require('express');
 const messageLibraryService = require('../services/messageLibraryService');
-const { importTriggersAndMessages, testImport } = require('../utils/importExcelData');
 
 const router = express.Router();
 
@@ -238,43 +237,7 @@ router.post('/import', (req, res) => {
   }
 });
 
-// Import Excel data (triggers and messages)
-router.post('/import-excel', (req, res) => {
-  try {
-    const { data } = req.body;
-    
-    if (!data || !Array.isArray(data)) {
-      return res.status(400).json({ 
-        error: 'Invalid data format. Expected array of [trigger, message] pairs.' 
-      });
-    }
-    
-    const result = importTriggersAndMessages(data);
-    res.json({
-      success: true,
-      message: 'Excel data imported successfully',
-      ...result
-    });
-  } catch (error) {
-    console.error('Error importing Excel data:', error);
-    res.status(500).json({ error: 'Failed to import Excel data' });
-  }
-});
-
-// Test import with sample data
-router.post('/test-import', (req, res) => {
-  try {
-    const result = testImport();
-    res.json({
-      success: true,
-      message: 'Test data imported successfully',
-      ...result
-    });
-  } catch (error) {
-    console.error('Error testing import:', error);
-    res.status(500).json({ error: 'Failed to test import' });
-  }
-});
+// Import/export data endpoints removed - functionality moved to frontend
 
 // Interactive Message Endpoints
 
