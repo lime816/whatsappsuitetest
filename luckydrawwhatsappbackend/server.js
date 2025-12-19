@@ -8,11 +8,6 @@ const webhookRoutes = require('./routes/webhook');
 const triggerRoutes = require('./routes/triggers');
 const whatsappRoutes = require('./routes/whatsapp');
 const messageLibraryRoutes = require('./routes/messageLibrary');
-const drawsRoutes = require('./routes/draws');
-const adminsRoutes = require('./routes/admins');
-const winnerNotificationRoutes = require('./routes/winnerNotifications');
-const testWinnerNotificationRoutes = require('./routes/testWinnerNotification');
-const salonAutomationRoutes = require('./routes/salonAutomation');
 
 const app = express();
 
@@ -95,11 +90,6 @@ app.use('/webhook', webhookRoutes);
 app.use('/api/triggers', triggerRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/message-library', messageLibraryRoutes);
-app.use('/api/draws', drawsRoutes);
-app.use('/api/admins', adminsRoutes);
-app.use('/api/winner-notifications', winnerNotificationRoutes);
-app.use('/api/test-winner-notification', testWinnerNotificationRoutes);
-app.use('/api/salon', salonAutomationRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -111,8 +101,6 @@ app.get('/', (req, res) => {
       triggers: '/api/triggers',
       whatsapp: '/api/whatsapp',
       messageLibrary: '/api/message-library',
-      winnerNotifications: '/api/winner-notifications',
-      testWinnerNotification: '/api/test-winner-notification',
       health: '/health'
     }
   });

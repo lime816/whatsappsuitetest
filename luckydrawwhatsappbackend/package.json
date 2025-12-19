@@ -1,7 +1,7 @@
 {
-  "name": "whatsapp-webhook-backend",
+  "name": "whatsapp-automation-backend",
   "version": "1.0.0",
-  "description": "WhatsApp Business API Webhook Server for Flow Automation",
+  "description": "General Purpose WhatsApp Business API Automation Server with Flow Support",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

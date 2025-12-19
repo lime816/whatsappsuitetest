@@ -10,9 +10,25 @@ let triggers = [
   },
   {
     id: '2',
-    keyword: 'register',
-    flowId: 'your_registration_flow_id',
-    message: 'Please complete your registration:',
+    keyword: 'start',
+    flowId: 'your_onboarding_flow_id',
+    message: 'Welcome! Let\'s get you started:',
+    isActive: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '3',
+    keyword: 'contact',
+    flowId: 'your_contact_flow_id',
+    message: 'Please share your contact details:',
+    isActive: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '4',
+    keyword: 'feedback',
+    flowId: 'your_feedback_flow_id',
+    message: 'We\'d love to hear your feedback:',
     isActive: true,
     createdAt: new Date().toISOString()
   }

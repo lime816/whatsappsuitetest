@@ -1,130 +1,130 @@
-# WhatsApp Business API Backend
+# WhatsApp Business API Automation Backend
 
-A comprehensive Node.js backend server for WhatsApp Business API webhook handling, intelligent flow automation, and message processing with trigger-based responses.
+A flexible and scalable Node.js backend server for WhatsApp Business API automation. Build intelligent chatbots, automate customer interactions, and integrate WhatsApp Flows with your business processes.
 
-## 🌟 **Complete WhatsApp Flow Builder System**
+## 🌟 **General Purpose WhatsApp Automation Platform**
 
-This backend is part of a **complete WhatsApp automation ecosystem** that includes:
+This backend provides a complete foundation for WhatsApp Business API automation that includes:
 
-### **📊 Frontend Flow Builder Dashboard**
+### **🤖 Intelligent Automation Engine**
 
-- **Live URL**: [https://whatsapp-flow-builder-production.up.railway.app](https://whatsapp-flow-builder-production.up.railway.app)
-- **Purpose**: Visual interface to create, manage, and monitor WhatsApp automation triggers
-- **Features**:
-  - 🎨 **Visual Trigger Builder** - Create keyword-based automation rules
-  - 📱 **Flow Management** - Connect triggers to WhatsApp Flows
-  - 📊 **Real-time Analytics** - Monitor trigger performance and usage
-  - ⚙️ **Configuration Panel** - Manage WhatsApp Business API settings
-  - 🧪 **Testing Interface** - Test triggers and flows before deployment
+- **Trigger-Based Responses** - Keyword matching system for automated replies
+- **WhatsApp Flow Integration** - Send interactive forms and collect responses
+- **Multi-Message Type Support** - Handle text, buttons, lists, and flow completions
+- **Customizable Logic** - Easy to extend for specific business needs
 
-### **🔗 Backend API Server** (This Repository)
+### **🔗 Backend API Server Features**
 
-- **Live URL**: [https://whatsappbackend-production-8946.up.railway.app](https://whatsappbackend-production-8946.up.railway.app)
 - **Purpose**: Process webhooks, execute triggers, and handle WhatsApp API integration
-- **Features**:
+- **Core Features**:
   - 📨 **Webhook Processing** - Receive and process WhatsApp messages
   - 🤖 **Intelligent Triggers** - Match keywords to automated responses
   - 📡 **WhatsApp API Integration** - Send messages and interactive flows
   - 💾 **Data Processing** - Handle form submissions and user data
+  - 🔧 **RESTful API** - Manage triggers and configurations programmatically
 
-### **🔄 Complete Workflow:**
+### **🔄 Complete Automation Workflow:**
 
 ```
-Frontend Dashboard                    Backend Server                     WhatsApp
-      ↓                                    ↓                              ↓
-1. Create trigger                    2. Store trigger config          3. User sends message
-   "hello" → Flow ID                    in memory/database                 "hello" to business
-      ↓                                    ↓                              ↓
-4. Configure flow message           5. Webhook receives message       6. Match trigger keyword
-   "complete karo"                      from WhatsApp API                 "hello" found!
-      ↓                                    ↓                              ↓
-7. Send interactive flow            8. User receives message          9. User completes form
-   with "Open Form" button             with flow button                  and submits data
-      ↓                                    ↓                              ↓
-10. Process form response          11. Analytics updated              12. Automation complete
-    store data/trigger actions         in dashboard                       workflow success!
+User Message                     Backend Processing                  WhatsApp Response
+     ↓                                    ↓                              ↓
+1. User sends keyword            2. Webhook receives message       3. Match trigger keyword
+   "hello" to business              from WhatsApp API                 "hello" found!
+     ↓                                    ↓                              ↓
+4. Trigger matched               5. Send interactive flow          6. User receives message
+   Flow ID: 123456789               with "Open Form" button           with flow button
+     ↓                                    ↓                              ↓
+7. User clicks button            8. WhatsApp Flow opens            9. User completes form
+   and opens form                   (registration/contact/etc)        and submits data
+     ↓                                    ↓                              ↓
+10. Form response received       11. Process form data             12. Send confirmation
+    via webhook                      (save/email/integrate)            "Thank you!" message
 ```
 
-### **🎯 End-to-End Automation Example:**
+### **🎯 Common Use Cases:**
 
-1. **Dashboard**: Create trigger `"register" → Flow ID: 123456789`
-2. **User Action**: Customer sends "register" to your WhatsApp Business number
-3. **Backend**: Receives webhook, matches trigger, sends flow message
-4. **Customer**: Gets "Please complete registration" + [Open Form] button
-5. **Interaction**: Customer clicks button, fills form, submits
-6. **Processing**: Backend processes form data, updates analytics
-7. **Dashboard**: Shows successful trigger execution and form completion
+- **Lead Generation**: Capture contact information through interactive forms
+- **Customer Support**: Automated FAQ responses and ticket creation
+- **Appointment Booking**: Collect booking details and preferences
+- **Feedback Collection**: Gather customer feedback and ratings
+- **Product Inquiries**: Showcase products and collect interest
+- **Event Registration**: Manage event sign-ups and information collection
 
 ---
 
 ## 🎯 **System Overview**
 
-This backend creates an **intelligent WhatsApp automation system** that:
+This backend creates a **flexible WhatsApp automation platform** that:
 
-- **Listens for incoming WhatsApp messages** via webhooks
-- **Matches keywords to predefined triggers**
-- **Automatically sends interactive flow messages** as responses
-- **Handles flow completions and user data** collection
-- **Provides real-time monitoring and logging**
+- **Processes incoming WhatsApp messages** via secure webhooks
+- **Matches keywords to customizable triggers** for automated responses
+- **Sends interactive flows, buttons, and lists** based on user input
+- **Handles form completions and data processing** with custom logic
+- **Provides RESTful APIs** for trigger management and configuration
+- **Supports multiple message types** including text, interactive, and media
+- **Offers comprehensive logging and monitoring** for debugging and analytics
 
 ## 🏗️ **Architecture & Flow**
 
-### **Frontend + Backend Integration:**
-
-The **Flow Builder Dashboard** and this **Backend API** work together seamlessly:
+### **Core System Components:**
 
 ```
-Flow Builder Dashboard                 Backend API Server
-        ↓                                    ↓
-📊 Visual trigger management          📨 Webhook processing
-⚙️ Configuration interface           🤖 Trigger execution
-📈 Real-time analytics              📡 WhatsApp API integration
-🧪 Testing and preview              💾 Data processing
-        ↓                                    ↓
-   Unified system for complete WhatsApp automation
+WhatsApp Business API                Backend Server                    Your Application
+        ↓                                    ↓                              ↓
+📨 Incoming messages              📨 Webhook processing            📊 Dashboard/Frontend
+📤 Outgoing responses            🤖 Trigger matching              ⚙️ Configuration UI
+📋 Interactive flows             📡 WhatsApp API calls            📈 Analytics & monitoring
+📊 Message status               💾 Data processing               🧪 Testing interface
+        ↓                                    ↓                              ↓
+   Complete WhatsApp automation with flexible integration options
 ```
 
-### **API Communication:**
+### **API Communication Flow:**
 
-- **Dashboard** ←→ **Backend**: REST API calls for trigger CRUD operations
-- **WhatsApp** → **Backend**: Webhooks for incoming messages
-- **Backend** → **WhatsApp**: API calls for sending flows and messages
-- **Backend** → **Dashboard**: Real-time updates and analytics
+- **WhatsApp** → **Backend**: Webhooks for incoming messages and status updates
+- **Backend** → **WhatsApp**: API calls for sending messages, flows, and media
+- **Your App** ←→ **Backend**: REST API for trigger management and configuration
+- **Backend** → **Your Systems**: Webhook/API integration for form data processing
 
 ### **Complete Automation Flow:**
 
 ```
-📱 User sends "hello" → WhatsApp Business Number
+📱 User sends "contact" → WhatsApp Business Number
      ↓
-🌐 WhatsApp → Sends webhook → Your Railway Backend
+🌐 WhatsApp → Sends webhook → Your Backend Server
      ↓
-🔍 Backend → Finds "hello" trigger → Flow ID: 772936888895590
+🔍 Backend → Finds "contact" trigger → Flow ID: your_contact_flow_id
      ↓
-🤖 Backend → Sends interactive flow → "complete karo" message
+🤖 Backend → Sends interactive flow → "Please share your contact details:"
      ↓
 📋 User → Clicks "Open Form" → Opens WhatsApp Flow
      ↓
 ✅ User → Completes form → Data sent back to webhook
      ↓
-💾 Backend → Processes form data → Saves/responds accordingly
+💾 Backend → Processes form data → Saves to database/sends email/triggers workflow
+     ↓
+📨 Backend → Sends confirmation → "Thank you! We'll be in touch soon."
 ```
 
 ### **Key Components:**
 
-- **Webhook Handler** (`routes/webhook.js`) - Receives WhatsApp events
-- **Trigger Service** (`services/triggerService.js`) - Matches keywords to flows
-- **WhatsApp Service** (`services/whatsappService.js`) - Sends messages and flows
-- **Flow Processor** (`services/webhookService.js`) - Handles form responses
-- **Message Library** (`routes/messageLibrary.js` + `services/messageLibraryService.js`) - Centralized store for reusable message templates and content blocks. Keeps responses consistent across triggers and flows and makes it easy to update messages in one place.
+- **Webhook Handler** (`routes/webhook.js`) - Receives and validates WhatsApp events
+- **Trigger Service** (`services/triggerService.js`) - Manages keyword-to-flow mappings
+- **WhatsApp Service** (`services/whatsappService.js`) - Handles all WhatsApp API communications
+- **Message Processor** (`services/webhookService.js`) - Processes incoming messages and responses
+- **Message Library** (`routes/messageLibrary.js` + `services/messageLibraryService.js`) - Template management for consistent messaging
+- **Configuration API** (`routes/triggers.js`) - RESTful endpoints for trigger management
 
 ## 🚀 **Features**
 
 ### 🔄 **Intelligent Automation**
 
 - **Keyword Triggers**: Match incoming messages to predefined actions
-- **Flow Deployment**: Send interactive WhatsApp Flows automatically
-- **Form Processing**: Handle user submissions and responses
-- **Multi-trigger Support**: Different keywords trigger different flows
+- **Interactive Flows**: Send WhatsApp Flows with forms, buttons, and lists
+- **Multi-Message Support**: Handle text, interactive, and media messages
+- **Form Processing**: Capture and process user submissions
+- **Custom Logic**: Easy to extend for specific business requirements
+- **Real-time Processing**: Instant response to user interactions
 
 ### 🔒 **Security & Reliability**
 
@@ -147,7 +147,7 @@ Flow Builder Dashboard                 Backend API Server
 - **npm** or yarn package manager
 - **WhatsApp Business API Account** (Meta Business)
 - **Meta Developer Account** with app created
-- **Railway Account** (for deployment) or similar hosting
+- **Hosting Platform** (Railway, Heroku, AWS, etc.)
 - **WhatsApp Business Phone Number** (verified)
 
 ### **Required Information:**
@@ -157,6 +157,12 @@ Flow Builder Dashboard                 Backend API Server
 - Business Account ID
 - Webhook Verify Token
 - WhatsApp Flow IDs (created in Meta Business Manager)
+
+## 🚀 **Quick Start**
+
+For detailed setup instructions, see **[GETTING_STARTED.md](./GETTING_STARTED.md)**
+
+For business-specific templates, see **[BUSINESS_TEMPLATES.md](./BUSINESS_TEMPLATES.md)**
 
 ## 🛠 **Step-by-Step Installation**
 
@@ -250,13 +256,16 @@ The system uses **keyword-based triggers** to automatically respond to WhatsApp 
 }
 ```
 
-### **Current Configured Triggers:**
+### **Default Configured Triggers:**
 
-| **Keyword** | **Flow ID**                 | **Response Message**                 | **Action**              |
+| **Keyword** | **Flow ID**                 | **Response Message**                 | **Use Case**            |
 | ----------- | --------------------------- | ------------------------------------ | ----------------------- |
-| `hello`     | `your_flow_id_here`         | "Hello! Please complete this form:"  | Opens registration flow |
-| `register`  | `your_registration_flow_id` | "Please complete your registration:" | Opens registration form |
-| `r`         | `772936888895590`           | "complete karo"                      | Opens quick form        |
+| `hello`     | `your_flow_id_here`         | "Hello! Please complete this form:"  | General greeting/form   |
+| `start`     | `your_onboarding_flow_id`   | "Welcome! Let's get you started:"    | User onboarding        |
+| `contact`   | `your_contact_flow_id`      | "Please share your contact details:" | Contact information    |
+| `feedback`  | `your_feedback_flow_id`     | "We'd love to hear your feedback:"   | Feedback collection    |
+
+*Note: Replace the Flow IDs with your actual WhatsApp Flow IDs from Meta Business Manager*
 
 ### **Complete Automation Flow:**
 
@@ -690,43 +699,50 @@ CMD ["node", "server.js"]
 
 #### **Prerequisites:**
 
-- ✅ Railway backend deployed and responding
+- ✅ Backend deployed and responding
 - ✅ Webhook configured in Meta Developer Console
 - ✅ Test phone number added to allowed recipients
-- ✅ WhatsApp Flow created with correct screen names
+- ✅ WhatsApp Flows created and published
 - ✅ Environment variables properly configured
+- ✅ Triggers configured with correct Flow IDs
 
 ### **Testing Methods:**
 
 #### **Method 1: Real WhatsApp Test** (Recommended)
 
 ```
-1. Send "hello" from allowed phone number → Your business WhatsApp
-2. Should receive: "Hello! Please complete this form:" + [Open Form] button
+1. Send trigger keyword (e.g., "hello") from allowed phone number
+2. Should receive: Configured message + [Open Form] button
 3. Click "Open Form" → WhatsApp Flow should open
 4. Complete form → Data should be processed by webhook
+5. Receive confirmation message
 ```
 
 #### **Method 2: API Testing**
 
 ```bash
 # Test health endpoint
-curl https://whatsappbackend-production-8946.up.railway.app/health
+curl https://your-domain.com/health
 
 # Test webhook verification
-curl "https://whatsappbackend-production-8946.up.railway.app/webhook?hub.mode=subscribe&hub.verify_token=mywebhooktoken123&hub.challenge=test123"
+curl "https://your-domain.com/webhook?hub.mode=subscribe&hub.verify_token=your_token&hub.challenge=test123"
 
 # Test triggers endpoint
-curl https://whatsappbackend-production-8946.up.railway.app/api/triggers
+curl https://your-domain.com/api/triggers
+
+# Test specific trigger
+curl -X POST https://your-domain.com/api/triggers/test \
+  -H "Content-Type: application/json" \
+  -d '{"message": "hello", "phoneNumber": "1234567890"}'
 ```
 
 #### **Method 3: Webhook Simulation**
 
-```powershell
+```bash
 # Simulate incoming WhatsApp message
-$payload = '{"object":"whatsapp_business_account","entry":[{"changes":[{"value":{"messages":[{"from":"918281348343","text":{"body":"hello"},"type":"text"}]}}]}]}'
-
-Invoke-WebRequest -Uri "https://whatsappbackend-production-8946.up.railway.app/webhook" -Method POST -Body $payload -ContentType "application/json"
+curl -X POST https://your-domain.com/webhook/test-text \
+  -H "Content-Type: application/json" \
+  -d '{"message": "hello", "phoneNumber": "1234567890"}'
 ```
 
 ### **Expected Results:**
@@ -734,7 +750,8 @@ Invoke-WebRequest -Uri "https://whatsappbackend-production-8946.up.railway.app/w
 - ✅ **200 OK** response from webhook
 - ✅ **Logs show**: "Found matching trigger", "Sending flow message"
 - ✅ **User receives**: Interactive flow message
-- ✅ **No errors** in Railway deployment logs
+- ✅ **Form completion** processes correctly
+- ✅ **No errors** in deployment logs
 
 ## 🔧 **Troubleshooting Guide**
 
@@ -1028,4 +1045,4 @@ For issues and questions:
 
 ---
 
-Made with ❤️ for WhatsApp Business API integration
+Made with ❤️ for WhatsApp Business API automation and integration
