@@ -7,6 +7,7 @@ require('dotenv').config();
 const logger = require('./utils/logger');
 const { triggerCache, sessionCache, rateLimitCache } = require('./utils/cache');
 const { apiRateLimiter } = require('./utils/rateLimiter');
+const { errorMiddleware } = require('./utils/errorHandler');
 
 const webhookRoutes = require('./routes/webhook');
 const triggerRoutes = require('./routes/triggers');
@@ -157,19 +158,7 @@ app.get('/', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', {
-    error: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    url: req.url,
-    method: req.method
-  });
-  
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
+app.use(errorMiddleware);
 
 // 404 handler
 app.use('*', (req, res) => {

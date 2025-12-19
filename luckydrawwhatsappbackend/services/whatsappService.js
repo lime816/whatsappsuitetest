@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { validateWhatsAppCredentials } = require('../utils/whatsappValidator');
 
 /**
  * WhatsApp Business API Service
@@ -8,14 +9,24 @@ class WhatsAppService {
     this.accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     this.phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     this.businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-    this.apiVersion = process.env.WHATSAPP_API_VERSION || 'v18.0';
+    this.apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
     this.baseUrl = `https://graph.facebook.com/${this.apiVersion}`;
     
-    if (!this.accessToken) {
-      console.warn('⚠️  WhatsApp access token not configured');
+    // Validate credentials on initialization
+    const validation = validateWhatsAppCredentials();
+    if (!validation.isValid) {
+      console.warn('⚠️  WhatsApp API credentials not fully configured:', validation.missing.join(', '));
     }
-    if (!this.phoneNumberId) {
-      console.warn('⚠️  WhatsApp phone number ID not configured');
+  }
+
+  /**
+   * Ensure credentials are available for API calls
+   * @private
+   */
+  _validateCredentials() {
+    const validation = validateWhatsAppCredentials();
+    if (!validation.isValid) {
+      throw new Error(validation.error);
     }
   }
 
@@ -23,9 +34,7 @@ class WhatsAppService {
    * Test WhatsApp API connection
    */
   async testConnection() {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     try {
       const url = `${this.baseUrl}/${this.phoneNumberId}`;
@@ -52,9 +61,7 @@ class WhatsAppService {
    * Send flow message to a phone number - FIXED VERSION
    */
   async sendFlowMessage(phoneNumber, flowId, message = 'Please complete this form:') {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     try {
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
@@ -139,9 +146,7 @@ class WhatsAppService {
    * Send interactive message with buttons or lists
    */
   async sendInteractiveMessage(phoneNumber, interactive) {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     try {
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
@@ -185,9 +190,7 @@ class WhatsAppService {
    * Send simple text message
    */
   async sendTextMessage(phoneNumber, text) {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     try {
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
@@ -226,9 +229,7 @@ class WhatsAppService {
    * Upload media file to WhatsApp
    */
   async uploadMedia(filePath, mimeType) {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     const FormData = require('form-data');
     const fs = require('fs');
@@ -272,9 +273,7 @@ class WhatsAppService {
    * Send document message
    */
   async sendDocument(phoneNumber, filePath, caption = '', filename = null) {
-    if (!this.accessToken || !this.phoneNumberId) {
-      throw new Error('WhatsApp credentials not configured');
-    }
+    this._validateCredentials();
 
     try {
       // Step 1: Upload the document

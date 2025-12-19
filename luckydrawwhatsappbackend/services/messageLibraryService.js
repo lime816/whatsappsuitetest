@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { whatsappService } = require('./whatsappService');
 
 // Message Library Integration Service
 class MessageLibraryService {
@@ -475,36 +475,18 @@ class MessageLibraryService {
     return this.messages.find(msg => msg.messageId === messageId);
   }
 
-  // Find matching triggers for a message
+  // Find matching triggers for a message (delegated to triggerService)
   findMatchingTriggers(messageText) {
+    // Use the main trigger service for consistency
+    const { findMatchingTrigger } = require('./triggerService');
+    const mainTrigger = findMatchingTrigger(messageText);
+    
+    if (mainTrigger) {
+      return [mainTrigger];
+    }
+    
+    // Fall back to interactive triggers if no main trigger found
     const normalizedText = messageText.toLowerCase().trim();
-    // Quick registration marker detection (e.g., REGISTER_CONTEST:123)
-    const regMatch = messageText.match(/register_contest:\s*(\d+)/i);
-    if (regMatch) {
-      const contestId = Number(regMatch[1]);
-      return [{
-        triggerId: `register_${contestId}`,
-        triggerType: 'registration',
-        triggerValue: contestId,
-        nextAction: 'start_registration',
-        targetId: contestId
-      }];
-    }
-
-    // Welcome-style messages e.g. "welcome to \"Contest Name\"" — infer contest by name fragment
-    const welcomeMatch = messageText.match(/welcome to\s*\"?([^\"]+)\"?/i);
-    if (welcomeMatch) {
-      const nameFragment = welcomeMatch[1].trim();
-      return [{
-        triggerId: `register_by_name_${nameFragment.replace(/\s+/g, '_').toLowerCase()}`,
-        triggerType: 'registration_name_infer',
-        triggerValue: nameFragment,
-        nextAction: 'start_registration_by_name',
-        targetId: nameFragment
-      }];
-    }
-
-    // Default keyword matching
     return this.triggers.filter(trigger => {
       if (trigger.triggerType === 'keyword_match') {
         const keywords = Array.isArray(trigger.triggerValue) 
@@ -597,33 +579,20 @@ class MessageLibraryService {
     return options;
   }
 
-  // Send message using WhatsApp API
+  // Send message using WhatsApp API (consolidated to use whatsappService)
   async sendLibraryMessage(messageEntry, recipientPhone) {
-    const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-    const API_VERSION = process.env.WHATSAPP_API_VERSION || 'v22.0';
-
-    if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-      throw new Error('Missing WhatsApp API credentials');
-    }
-
-    const apiUrl = `https://graph.facebook.com/${API_VERSION}/${PHONE_NUMBER_ID}/messages`;
-    
-    let messagePayload;
+    console.log('📤 Sending library message:', {
+      type: messageEntry.type,
+      to: recipientPhone,
+      messageId: messageEntry.messageId
+    });
 
     switch (messageEntry.type) {
       case 'standard_text':
-        messagePayload = {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: recipientPhone,
-          type: 'text',
-          text: {
-            preview_url: false,
-            body: messageEntry.contentPayload.body
-          }
-        };
-        break;
+        return await whatsappService.sendTextMessage(
+          recipientPhone, 
+          messageEntry.contentPayload.body
+        );
 
       case 'interactive_button':
         const payload = messageEntry.contentPayload;
@@ -648,14 +617,7 @@ class MessageLibraryService {
           interactive.footer = { text: payload.footer };
         }
 
-        messagePayload = {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: recipientPhone,
-          type: 'interactive',
-          interactive
-        };
-        break;
+        return await whatsappService.sendInteractiveMessage(recipientPhone, interactive);
 
       case 'interactive_list':
         const listPayload = messageEntry.contentPayload;
@@ -682,39 +644,10 @@ class MessageLibraryService {
           listInteractive.footer = { text: listPayload.footer };
         }
 
-        messagePayload = {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: recipientPhone,
-          type: 'interactive',
-          interactive: listInteractive
-        };
-        break;
+        return await whatsappService.sendInteractiveMessage(recipientPhone, listInteractive);
 
       default:
         throw new Error(`Unsupported message type: ${messageEntry.type}`);
-    }
-
-    try {
-      console.log('📤 Sending message via WhatsApp API:', {
-        type: messageEntry.type,
-        to: recipientPhone,
-        messageId: messageEntry.messageId
-      });
-
-      const response = await axios.post(apiUrl, messagePayload, {
-        headers: {
-          'Authorization': `Bearer ${ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('✅ Message sent successfully:', response.data);
-      return { success: true, data: response.data };
-
-    } catch (error) {
-      console.error('❌ Failed to send message:', error.response?.data || error.message);
-      throw new Error(`Failed to send message: ${error.response?.data?.error?.message || error.message}`);
     }
   }
 

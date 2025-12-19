@@ -6,38 +6,21 @@ const {
   deleteTrigger,
   testTrigger 
 } = require('../services/triggerService');
+const { asyncHandler, handleRouteError, sendSuccessResponse } = require('../utils/errorHandler');
+const { requireFields } = require('../utils/validation');
 
 const router = express.Router();
 
 // Get all triggers
-router.get('/', (req, res) => {
-  try {
-    const triggers = getAllTriggers();
-    res.json({
-      success: true,
-      data: triggers,
-      count: triggers.length
-    });
-  } catch (error) {
-    console.error('Error getting triggers:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get triggers'
-    });
-  }
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const triggers = getAllTriggers();
+  sendSuccessResponse(res, { triggers, count: triggers.length });
+}));
 
 // Create new trigger
-router.post('/', (req, res) => {
+router.post('/', requireFields(['keyword', 'flowId']), asyncHandler(async (req, res) => {
   try {
     const { keyword, flowId, message, isActive = true } = req.body;
-
-    if (!keyword || !flowId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Keyword and flowId are required'
-      });
-    }
 
     const trigger = createTrigger({
       keyword,
@@ -46,21 +29,14 @@ router.post('/', (req, res) => {
       isActive
     });
 
-    res.status(201).json({
-      success: true,
-      data: trigger
-    });
+    sendSuccessResponse(res, trigger, 'Trigger created successfully', 201);
   } catch (error) {
-    console.error('Error creating trigger:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create trigger'
-    });
+    handleRouteError(res, error, 'creating trigger');
   }
-});
+}));
 
 // Update trigger
-router.put('/:id', (req, res) => {
+router.put('/:id', asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -74,21 +50,14 @@ router.put('/:id', (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      data: trigger
-    });
+    sendSuccessResponse(res, trigger, 'Trigger updated successfully');
   } catch (error) {
-    console.error('Error updating trigger:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to update trigger'
-    });
+    handleRouteError(res, error, 'updating trigger');
   }
-});
+}));
 
 // Delete trigger
-router.delete('/:id', (req, res) => {
+router.delete('/:id', asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const success = deleteTrigger(id);
@@ -100,48 +69,25 @@ router.delete('/:id', (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      message: 'Trigger deleted successfully'
-    });
+    sendSuccessResponse(res, null, 'Trigger deleted successfully');
   } catch (error) {
-    console.error('Error deleting trigger:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete trigger'
-    });
+    handleRouteError(res, error, 'deleting trigger');
   }
-});
+}));
 
 // Test trigger with a message
-router.post('/test', async (req, res) => {
+router.post('/test', requireFields(['message']), asyncHandler(async (req, res) => {
   try {
     const { message, phoneNumber = '1234567890' } = req.body;
-
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        error: 'Message is required for testing'
-      });
-    }
-
     const result = await testTrigger(message, phoneNumber);
-
-    res.json({
-      success: true,
-      data: result
-    });
+    sendSuccessResponse(res, result, 'Trigger test completed');
   } catch (error) {
-    console.error('Error testing trigger:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to test trigger'
-    });
+    handleRouteError(res, error, 'testing trigger');
   }
-});
+}));
 
 // Activate/deactivate trigger
-router.patch('/:id/toggle', (req, res) => {
+router.patch('/:id/toggle', asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -155,18 +101,11 @@ router.patch('/:id/toggle', (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      data: trigger,
-      message: `Trigger ${isActive ? 'activated' : 'deactivated'} successfully`
-    });
+    const message = `Trigger ${isActive ? 'activated' : 'deactivated'} successfully`;
+    sendSuccessResponse(res, trigger, message);
   } catch (error) {
-    console.error('Error toggling trigger:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to toggle trigger'
-    });
+    handleRouteError(res, error, 'toggling trigger');
   }
-});
+}));
 
 module.exports = router;
