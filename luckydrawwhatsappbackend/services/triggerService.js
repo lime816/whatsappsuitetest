@@ -1,3 +1,6 @@
+const logger = require('../utils/logger');
+const { triggerCache } = require('../utils/cache');
+
 // In-memory storage for triggers (use a database in production)
 let triggers = [
   {
@@ -6,7 +9,9 @@ let triggers = [
     flowId: 'your_flow_id_here',
     message: 'Hello! Please complete this form:',
     isActive: true,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    usageCount: 0,
+    lastUsed: null
   },
   {
     id: '2',
@@ -14,7 +19,9 @@ let triggers = [
     flowId: 'your_onboarding_flow_id',
     message: 'Welcome! Let\'s get you started:',
     isActive: true,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    usageCount: 0,
+    lastUsed: null
   },
   {
     id: '3',
@@ -22,7 +29,9 @@ let triggers = [
     flowId: 'your_contact_flow_id',
     message: 'Please share your contact details:',
     isActive: true,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    usageCount: 0,
+    lastUsed: null
   },
   {
     id: '4',
@@ -30,9 +39,42 @@ let triggers = [
     flowId: 'your_feedback_flow_id',
     message: 'We\'d love to hear your feedback:',
     isActive: true,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    usageCount: 0,
+    lastUsed: null
   }
 ];
+
+// Create trigger lookup index for faster matching
+let triggerIndex = new Map();
+let indexLastUpdated = 0;
+
+function updateTriggerIndex() {
+  const now = Date.now();
+  
+  // Only rebuild index if triggers have been modified
+  if (now - indexLastUpdated < 60000) { // 1 minute cache
+    return;
+  }
+  
+  triggerIndex.clear();
+  
+  // Sort triggers by usage count (most used first) for better performance
+  const sortedTriggers = [...triggers]
+    .filter(t => t.isActive)
+    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
+  
+  for (const trigger of sortedTriggers) {
+    const keyword = trigger.keyword.toLowerCase();
+    if (!triggerIndex.has(keyword)) {
+      triggerIndex.set(keyword, []);
+    }
+    triggerIndex.get(keyword).push(trigger);
+  }
+  
+  indexLastUpdated = now;
+  logger.debug(`Trigger index updated: ${triggerIndex.size} keywords indexed`);
+}
 
 /**
  * Get all triggers
@@ -40,9 +82,8 @@ let triggers = [
 function getAllTriggers() {
   return triggers.map(trigger => ({
     ...trigger,
-    // Add computed properties
-    matchCount: 0, // In production, you'd track this
-    lastUsed: null   // In production, you'd track this
+    matchCount: trigger.usageCount || 0,
+    lastUsed: trigger.lastUsed
   }));
 }
 
@@ -76,7 +117,14 @@ function createTrigger(triggerData) {
 
   triggers.push(newTrigger);
   
-  console.log(`✅ Created new trigger: "${newTrigger.keyword}" -> ${newTrigger.flowId}`);
+  // Invalidate cache
+  indexLastUpdated = 0;
+  triggerCache.clear();
+  
+  logger.info(`Created new trigger: "${newTrigger.keyword}"`, {
+    flowId: newTrigger.flowId,
+    triggerId: newTrigger.id
+  });
   
   return newTrigger;
 }
@@ -111,7 +159,11 @@ function updateTrigger(id, updates) {
     updatedAt: new Date().toISOString()
   };
 
-  console.log(`✅ Updated trigger ${id}:`, updates);
+  // Invalidate cache
+  indexLastUpdated = 0;
+  triggerCache.clear();
+
+  logger.info(`Updated trigger ${id}`, { updates });
   
   return triggers[index];
 }
@@ -128,7 +180,13 @@ function deleteTrigger(id) {
 
   const deletedTrigger = triggers.splice(index, 1)[0];
   
-  console.log(`✅ Deleted trigger: "${deletedTrigger.keyword}"`);
+  // Invalidate cache
+  indexLastUpdated = 0;
+  triggerCache.clear();
+  
+  logger.info(`Deleted trigger: "${deletedTrigger.keyword}"`, {
+    triggerId: deletedTrigger.id
+  });
   
   return true;
 }
@@ -139,21 +197,72 @@ function deleteTrigger(id) {
 function findMatchingTrigger(messageText) {
   const normalizedMessage = messageText.toLowerCase().trim();
   
-  // Find triggers that match the message text
-  const matchingTriggers = triggers.filter(trigger => 
-    trigger.isActive && normalizedMessage.includes(trigger.keyword.toLowerCase())
-  );
-
-  // Return the first matching trigger (you could implement priority logic here)
-  if (matchingTriggers.length > 0) {
-    const trigger = matchingTriggers[0];
-    console.log(`🎯 Found matching trigger: "${trigger.keyword}" for message: "${messageText}"`);
-    
-    return trigger;
+  // Check cache first
+  const cacheKey = `trigger:${normalizedMessage}`;
+  let cachedResult = triggerCache.get(cacheKey);
+  
+  if (cachedResult !== null) {
+    if (cachedResult) {
+      // Update usage stats
+      updateTriggerUsage(cachedResult.id);
+      logger.debug(`Trigger cache hit: "${cachedResult.keyword}"`);
+    }
+    return cachedResult;
+  }
+  
+  // Update trigger index if needed
+  updateTriggerIndex();
+  
+  // Try exact match first (fastest)
+  if (triggerIndex.has(normalizedMessage)) {
+    const exactMatches = triggerIndex.get(normalizedMessage);
+    if (exactMatches.length > 0) {
+      const trigger = exactMatches[0];
+      updateTriggerUsage(trigger.id);
+      
+      // Cache the result
+      triggerCache.set(cacheKey, trigger, 300); // 5 minutes
+      
+      logger.debug(`Exact trigger match: "${trigger.keyword}"`);
+      return trigger;
+    }
+  }
+  
+  // Fall back to substring matching (slower)
+  for (const [keyword, triggerList] of triggerIndex.entries()) {
+    if (normalizedMessage.includes(keyword)) {
+      const trigger = triggerList[0]; // First (most used) trigger
+      updateTriggerUsage(trigger.id);
+      
+      // Cache the result
+      triggerCache.set(cacheKey, trigger, 300);
+      
+      logger.debug(`Substring trigger match: "${trigger.keyword}"`);
+      return trigger;
+    }
   }
 
-  console.log(`📝 No matching trigger found for message: "${messageText}"`);
+  // Cache negative result to avoid repeated lookups
+  triggerCache.set(cacheKey, null, 60); // 1 minute for negative results
+  
+  logger.debug(`No matching trigger found for: "${messageText}"`);
   return null;
+}
+
+/**
+ * Update trigger usage statistics
+ */
+function updateTriggerUsage(triggerId) {
+  const trigger = triggers.find(t => t.id === triggerId);
+  if (trigger) {
+    trigger.usageCount = (trigger.usageCount || 0) + 1;
+    trigger.lastUsed = new Date().toISOString();
+    
+    // Invalidate index to resort by usage
+    if (trigger.usageCount % 10 === 0) { // Every 10 uses
+      indexLastUpdated = 0;
+    }
+  }
 }
 
 /**
@@ -162,7 +271,7 @@ function findMatchingTrigger(messageText) {
 async function testTrigger(message, phoneNumber) {
   const { simulateWebhook } = require('./webhookService');
   
-  console.log(`🧪 Testing trigger with message: "${message}"`);
+  logger.debug(`Testing trigger with message: "${message}"`);
   
   const matchingTrigger = findMatchingTrigger(message);
   

@@ -1,48 +1,67 @@
 const { sendTextMessage, sendFlowMessage } = require('./whatsappService');
 const { findMatchingTrigger } = require('./triggerService');
+const logger = require('../utils/logger');
+const { sessionCache } = require('../utils/cache');
+const messageQueue = require('../utils/messageQueue');
 
 /**
  * Process incoming webhook payload from WhatsApp Business API
  */
 async function processWebhookPayload(payload) {
   if (payload.object !== 'whatsapp_business_account') {
-    console.log('📝 Not a WhatsApp Business webhook, ignoring');
+    logger.debug('Not a WhatsApp Business webhook, ignoring');
     return;
   }
 
+  const startTime = Date.now();
+  let messagesProcessed = 0;
+
   for (const entry of payload.entry) {
     for (const change of entry.changes) {
-      if (change.field === 'messages' && change.value.messages) {
+      // Only process relevant events
+      if (change.field !== 'messages') {
+        continue;
+      }
+
+      // Handle incoming messages
+      if (change.value.messages) {
         for (const message of change.value.messages) {
-          await handleIncomingMessage(message);
+          messagesProcessed++;
+          
+          // Process different message types
+          if (message.type === 'interactive') {
+            setImmediate(() => handleInteractiveMessage(message));
+          } else {
+            setImmediate(() => handleIncomingMessage(message));
+          }
         }
       }
 
       // Handle message status updates (delivery, read, etc.)
-      if (change.field === 'messages' && change.value.statuses) {
+      if (change.value.statuses) {
         for (const status of change.value.statuses) {
-          handleMessageStatus(status);
-        }
-      }
-
-      // Handle interactive message responses (flow completions, button clicks)
-      if (change.field === 'messages' && change.value.messages) {
-        for (const message of change.value.messages) {
-          if (message.type === 'interactive') {
-            await handleInteractiveMessage(message);
-          }
+          setImmediate(() => handleMessageStatus(status));
         }
       }
     }
   }
+
+  // Log performance metrics
+  const processingTime = Date.now() - startTime;
+  logger.performance(`Webhook processed: ${messagesProcessed} messages in ${processingTime}ms`);
 }
 
 /**
  * Handle individual incoming messages
  */
 async function handleIncomingMessage(message) {
+  const startTime = Date.now();
+  
   try {
-    console.log(`📱 Processing message from ${message.from}:`, JSON.stringify(message, null, 2));
+    logger.debug(`Processing message from ${message.from}`, {
+      type: message.type,
+      messageId: message.id
+    });
 
     // Extract message text
     let messageText = '';
@@ -52,46 +71,67 @@ async function handleIncomingMessage(message) {
 
     // Skip if no text content
     if (!messageText) {
-      console.log('📝 No text content, skipping trigger matching');
+      logger.debug('No text content, skipping trigger matching');
       return;
     }
+
+    // Check for existing conversation session
+    const sessionKey = `session:${message.from}`;
+    let session = sessionCache.get(sessionKey);
 
     // Try to find matching trigger
     const matchingTrigger = findMatchingTrigger(messageText);
     
     if (matchingTrigger) {
-      console.log(`🎯 Found matching trigger: "${matchingTrigger.keyword}" -> Flow ID: ${matchingTrigger.flowId}`);
+      logger.trigger(`Found matching trigger: "${matchingTrigger.keyword}"`, {
+        flowId: matchingTrigger.flowId,
+        phoneNumber: message.from
+      });
       
-      try {
-        // Send flow message based on trigger
-        await sendFlowMessage(
-          message.from,
-          matchingTrigger.flowId,
-          matchingTrigger.message
-        );
-        
-        console.log('✅ Flow message sent successfully');
-        return;
-      } catch (error) {
-        console.error('❌ Error sending flow message:', error);
-        // Fallback to text message
-        await sendTextMessage(
-          message.from,
-          matchingTrigger.message || 'Thank you for your message. Please try again.'
-        );
-      }
+      // Queue flow message instead of sending immediately
+      messageQueue.add({
+        type: 'flow',
+        phoneNumber: message.from,
+        flowId: matchingTrigger.flowId,
+        text: matchingTrigger.message
+      }, 'high'); // High priority for user interactions
+
+      // Update session
+      sessionCache.set(sessionKey, {
+        lastTrigger: matchingTrigger.keyword,
+        lastActivity: Date.now(),
+        messageCount: (session?.messageCount || 0) + 1
+      }, 72000); // 20 hours
+
+      return;
     }
 
-    // If no trigger matched, send default help message
-    console.log('📝 No matching trigger found, sending default help message');
-    await sendDefaultHelpMessage(message.from);
+    // If no trigger matched, queue default help message
+    logger.debug('No matching trigger found, queuing default help message');
+    messageQueue.add({
+      type: 'text',
+      phoneNumber: message.from,
+      text: getDefaultHelpMessage()
+    }, 'normal');
 
   } catch (error) {
-    console.error('❌ Error handling incoming message:', error);
-    await sendTextMessage(
-      message.from,
-      'Sorry, something went wrong. Please try again later.'
-    );
+    logger.error('Error handling incoming message:', {
+      error: error.message,
+      phoneNumber: message.from,
+      messageId: message.id
+    });
+    
+    // Queue error message
+    messageQueue.add({
+      type: 'text',
+      phoneNumber: message.from,
+      text: 'Sorry, something went wrong. Please try again later.'
+    }, 'high');
+  } finally {
+    const processingTime = Date.now() - startTime;
+    logger.performance(`Message processed in ${processingTime}ms`, {
+      phoneNumber: message.from
+    });
   }
 }
 
@@ -100,7 +140,9 @@ async function handleIncomingMessage(message) {
  */
 async function handleInteractiveMessage(message) {
   try {
-    console.log(`🔄 Processing interactive message from ${message.from}`);
+    logger.debug(`Processing interactive message from ${message.from}`, {
+      type: message.interactive?.type
+    });
 
     // Handle flow completion responses
     if (message.interactive && message.interactive.nfm_reply) {
@@ -121,7 +163,10 @@ async function handleInteractiveMessage(message) {
     }
 
   } catch (error) {
-    console.error('❌ Error handling interactive message:', error);
+    logger.error('Error handling interactive message:', {
+      error: error.message,
+      phoneNumber: message.from
+    });
   }
 }
 
@@ -133,20 +178,25 @@ async function handleFlowCompletion(message) {
     const phoneNumber = message.from;
     const flowResponse = JSON.parse(message.interactive.nfm_reply.response_json);
     
-    console.log(`📋 Flow completed by ${phoneNumber}:`, flowResponse);
+    logger.info(`Flow completed by ${phoneNumber}`, {
+      formFields: Object.keys(flowResponse).length
+    });
     
-    // Send confirmation message
-    await sendTextMessage(
-      phoneNumber,
-      'Thank you! Your form has been submitted successfully. We will get back to you soon.'
-    );
+    // Queue confirmation message
+    messageQueue.add({
+      type: 'text',
+      phoneNumber: phoneNumber,
+      text: 'Thank you! Your form has been submitted successfully. We will get back to you soon.'
+    }, 'high');
 
-    // Here you can add custom logic to process the form data
-    // For example: save to database, send notifications, etc.
-    await processFormData(phoneNumber, flowResponse);
+    // Process form data asynchronously
+    setImmediate(() => processFormData(phoneNumber, flowResponse));
 
   } catch (error) {
-    console.error('❌ Error handling flow completion:', error);
+    logger.error('Error handling flow completion:', {
+      error: error.message,
+      phoneNumber: message.from
+    });
   }
 }
 
@@ -157,13 +207,14 @@ async function handleButtonClick(message) {
   const buttonId = message.interactive.button_reply.id;
   const phoneNumber = message.from;
   
-  console.log(`🔘 Button clicked: ${buttonId} by ${phoneNumber}`);
+  logger.debug(`Button clicked: ${buttonId}`, { phoneNumber });
   
-  // You can add custom button handling logic here
-  await sendTextMessage(
-    phoneNumber,
-    `You clicked: ${buttonId}. Thank you for your response!`
-  );
+  // Queue response message
+  messageQueue.add({
+    type: 'text',
+    phoneNumber: phoneNumber,
+    text: `You clicked: ${buttonId}. Thank you for your response!`
+  }, 'high');
 }
 
 /**
@@ -174,13 +225,17 @@ async function handleListSelection(message) {
   const listItemTitle = message.interactive.list_reply.title;
   const phoneNumber = message.from;
   
-  console.log(`📋 List item selected: ${listItemId} (${listItemTitle}) by ${phoneNumber}`);
+  logger.debug(`List item selected: ${listItemId}`, { 
+    title: listItemTitle,
+    phoneNumber 
+  });
   
-  // You can add custom list handling logic here
-  await sendTextMessage(
-    phoneNumber,
-    `You selected: ${listItemTitle}. Thank you for your choice!`
-  );
+  // Queue response message
+  messageQueue.add({
+    type: 'text',
+    phoneNumber: phoneNumber,
+    text: `You selected: ${listItemTitle}. Thank you for your choice!`
+  }, 'high');
 }
 
 /**
@@ -188,7 +243,9 @@ async function handleListSelection(message) {
  */
 async function processFormData(phoneNumber, formData) {
   try {
-    console.log(`💾 Processing form data for ${phoneNumber}:`, formData);
+    logger.info(`Processing form data for ${phoneNumber}`, {
+      fieldCount: Object.keys(formData).length
+    });
     
     // Add your custom form processing logic here
     // Examples:
@@ -197,19 +254,25 @@ async function processFormData(phoneNumber, formData) {
     // - Trigger other workflows
     // - Update CRM systems
     
-    // For now, just log the data
-    console.log('✅ Form data processed successfully');
+    // Store in session cache for potential follow-up
+    const sessionKey = `form:${phoneNumber}:${Date.now()}`;
+    sessionCache.set(sessionKey, formData, 72000); // Store for 20 hours
+    
+    logger.info('Form data processed successfully', { phoneNumber });
     
   } catch (error) {
-    console.error('❌ Error processing form data:', error);
+    logger.error('Error processing form data:', {
+      error: error.message,
+      phoneNumber
+    });
   }
 }
 
 /**
- * Send default help message when no triggers match
+ * Get default help message when no triggers match
  */
-async function sendDefaultHelpMessage(phoneNumber) {
-  const helpMessage = `👋 Welcome! I'm here to help you.
+function getDefaultHelpMessage() {
+  return `👋 Welcome! I'm here to help you.
 
 🤖 *Available Commands:*
 • Type keywords to trigger automated responses
@@ -219,20 +282,23 @@ async function sendDefaultHelpMessage(phoneNumber) {
 Contact our support team for assistance.
 
 Thank you for reaching out!`;
-
-  await sendTextMessage(phoneNumber, helpMessage);
 }
 
 /**
  * Handle message status updates
  */
 function handleMessageStatus(status) {
-  console.log(`📊 Message status update:`, {
-    id: status.id,
-    status: status.status,
-    timestamp: status.timestamp,
-    recipient: status.recipient_id
-  });
+  // Only log important status updates in production
+  if (status.status === 'failed' || status.status === 'undelivered') {
+    logger.warn(`Message status: ${status.status}`, {
+      messageId: status.id,
+      recipient: status.recipient_id
+    });
+  } else {
+    logger.verbose(`Message status: ${status.status}`, {
+      messageId: status.id
+    });
+  }
 }
 
 /**
@@ -271,7 +337,7 @@ async function simulateWebhook(messageText, phoneNumber) {
     ]
   };
 
-  console.log('🧪 Simulating webhook with text message:', messageText);
+  logger.debug('Simulating webhook with text message:', { messageText });
   await processWebhookPayload(mockPayload);
   
   return {
@@ -315,7 +381,7 @@ async function simulateInteractiveWebhook(interactiveData, phoneNumber) {
     ]
   };
 
-  console.log('🧪 Simulating interactive webhook:', interactiveData);
+  logger.debug('Simulating interactive webhook:', { interactiveData });
   await processWebhookPayload(mockPayload);
   
   return {

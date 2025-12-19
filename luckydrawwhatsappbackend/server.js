@@ -4,6 +4,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+const logger = require('./utils/logger');
+const { triggerCache, sessionCache, rateLimitCache } = require('./utils/cache');
+const { apiRateLimiter } = require('./utils/rateLimiter');
+
 const webhookRoutes = require('./routes/webhook');
 const triggerRoutes = require('./routes/triggers');
 const whatsappRoutes = require('./routes/whatsapp');
@@ -21,21 +25,46 @@ const { getCorsConfig, getEnvironmentConfig } = require('./utils/config');
 const corsOptions = getCorsConfig();
 app.use(cors(corsOptions));
 
-// Logging middleware
-app.use(morgan('combined'));
+// Logging middleware - only in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('combined'));
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check endpoint
+// Rate limiting middleware for API routes
+app.use('/api', (req, res, next) => {
+  if (!apiRateLimiter.isAllowed(req.ip)) {
+    return res.status(429).json({
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Please try again later.',
+      retryAfter: 60
+    });
+  }
+  next();
+});
+
+// Health check endpoint with performance metrics
 app.get('/health', (req, res) => {
+  const memoryUsage = process.memoryUsage();
+  
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
-    version: require('./package.json').version
+    version: require('./package.json').version,
+    memory: {
+      used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+      total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`
+    },
+    cache: {
+      triggers: triggerCache.getStats(),
+      sessions: sessionCache.getStats(),
+      rateLimits: rateLimitCache.getStats()
+    }
   });
 });
 
@@ -51,7 +80,7 @@ app.get('/api/proxy/flow-json', async (req, res) => {
       });
     }
 
-    console.log('📥 Proxying flow JSON request:', url);
+    logger.debug('Proxying flow JSON request:', { url });
 
     // Fetch the JSON from WhatsApp's download URL
     const response = await fetch(url, {
@@ -62,7 +91,10 @@ app.get('/api/proxy/flow-json', async (req, res) => {
     });
 
     if (!response.ok) {
-      console.error('❌ Failed to fetch from download URL:', response.status);
+      logger.error('Failed to fetch from download URL:', { 
+        status: response.status,
+        url 
+      });
       return res.status(response.status).json({
         success: false,
         error: `Failed to fetch: ${response.statusText}`
@@ -70,19 +102,37 @@ app.get('/api/proxy/flow-json', async (req, res) => {
     }
 
     const jsonData = await response.json();
-    console.log('✅ Flow JSON fetched successfully via proxy');
+    logger.info('Flow JSON fetched successfully via proxy');
 
     res.json({
       success: true,
       data: jsonData
     });
   } catch (error) {
-    console.error('❌ Proxy error:', error);
+    logger.error('Proxy error:', { error: error.message });
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to proxy request'
     });
   }
+});
+
+// Performance monitoring endpoint
+app.get('/metrics', (req, res) => {
+  const messageQueue = require('./utils/messageQueue');
+  
+  res.json({
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    cache: {
+      triggers: triggerCache.getStats(),
+      sessions: sessionCache.getStats(),
+      rateLimits: rateLimitCache.getStats()
+    },
+    messageQueue: messageQueue.getStats(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // API routes
@@ -108,7 +158,13 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  logger.error('Unhandled error:', {
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    url: req.url,
+    method: req.method
+  });
+  
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -127,13 +183,23 @@ const PORT = process.env.PORT || 3001;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 
 app.listen(PORT, HOST, () => {
-  console.log(`🚀 WhatsApp Webhook Server running on http://${HOST}:${PORT}`);
-  console.log(`📱 Webhook URL: http://${HOST}:${PORT}/webhook`);
-  console.log(`🌐 Frontend CORS: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`⚙️  Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`WhatsApp Automation Server started`, {
+    host: HOST,
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    version: require('./package.json').version,
+    webhookUrl: `http://${HOST}:${PORT}/webhook`,
+    frontendCors: process.env.FRONTEND_URL || 'http://localhost:5173'
+  });
   
-  // Test that the server is actually working
-  console.log('✅ Server is ready to accept requests');
+  // Start cleanup interval
+  setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    logger.performance('Memory usage check', {
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`
+    });
+  }, 300000); // Every 5 minutes
 });
 
 module.exports = app;
