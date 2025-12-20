@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid/non-secure'
-import { messageLibraryService } from '../utils/messageLibraryApiService'
+import { messageLibraryService } from '../utils/messageLibraryService'
 import type { 
   MessageLibraryEntry, 
   TriggerConfiguration, 
