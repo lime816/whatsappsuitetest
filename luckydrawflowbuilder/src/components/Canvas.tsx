@@ -35,8 +35,11 @@ export default function Canvas() {
 
   if (!screen) {
     return (
-      <div className="glass-panel p-8 text-center">
-        <p className="text-gray-500">No screen selected</p>
+      <div className="hypr-panel flex items-center justify-center">
+        <div className="text-center">
+          <div className="hypr-status-dot hypr-status-inactive mb-2"></div>
+          <p className="hypr-text-muted">NO_SCREEN_SELECTED</p>
+        </div>
       </div>
     )
   }
@@ -46,37 +49,33 @@ export default function Canvas() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="glass-panel overflow-hidden"
+      className="hypr-panel h-full overflow-hidden"
     >
       {/* Screen Header */}
-      <div className="bg-gray-50 p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <Smartphone className="w-5 h-5 text-primary-600" />
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">{screen.title}</h3>
-            <p className="text-xs text-gray-500">{screen.elements.length} components</p>
-          </div>
+      <div className="hypr-section-header">
+        <div className="flex items-center gap-2">
+          <Smartphone className="w-4 h-4" />
+          <span className="hypr-section-title">{screen.title}</span>
+          <span className="hypr-badge">{screen.elements.length}</span>
         </div>
       </div>
 
       {/* Canvas Content */}
-      <div className="p-4 min-h-[400px]">
+      <div className="flex-1 overflow-y-auto hypr-scrollbar">
         {screen.elements.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-16 text-center"
           >
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Smartphone className="w-8 h-8 text-gray-400" />
-            </div>
-            <p className="text-gray-600 mb-2">No components yet</p>
-            <p className="text-sm text-gray-500">Add components from the palette on the left</p>
+            <div className="hypr-status-dot hypr-status-inactive mb-4"></div>
+            <p className="hypr-text-muted mb-1">NO_COMPONENTS</p>
+            <p className="hypr-text-dim text-xs">Add components from left panel</p>
           </motion.div>
         ) : (
           <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={screen.elements.map(e => e.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-3">
+              <div className="p-4 space-y-2">
                 <AnimatePresence>
                   {screen.elements.map((el, idx) => (
                     <motion.div
@@ -84,70 +83,49 @@ export default function Canvas() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: idx * 0.05 }}
+                      transition={{ delay: idx * 0.02 }}
                       className="relative group"
                     >
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        {/* Component Preview */}
-                        <div 
-                          onMouseEnter={() => setHoveredId(el.id)}
-                          onMouseLeave={() => setHoveredId(null)}
-                          className="relative"
-                        >
-                          <SortableItem id={el.id}>
-                            <div className="flex-1">
-                              <Preview 
-                                el={el} 
-                                onClick={() => setSelectedElement(el)}
-                                isSelected={selectedElement?.id === el.id}
-                              />
-                            </div>
-                            
-                            {/* Hover Actions */}
-                            <AnimatePresence>
-                              {hoveredId === el.id && (
-                                <motion.button
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.8 }}
-                                  onClick={() => setDeletingElement(el)}
-                                  className="absolute top-2 right-2 btn-danger p-2 z-10"
-                                  aria-label="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </motion.button>
-                              )}
-                            </AnimatePresence>
-                          </SortableItem>
-                        </div>
-
-                        {/* Inline Property Editor */}
-                        <AnimatePresence>
-                          {selectedElement?.id === el.id && (
-                            <motion.div
-                              initial={{ opacity: 0, x: 20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -20 }}
-                              className="lg:block hidden"
-                            >
-                              <PropertyEditorInline
-                                screenId={screen.id}
-                                element={el}
-                                onClose={() => setSelectedElement(null)}
-                              />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                      <div 
+                        onMouseEnter={() => setHoveredId(el.id)}
+                        onMouseLeave={() => setHoveredId(null)}
+                        className="relative"
+                      >
+                        <SortableItem id={el.id}>
+                          <div className="flex-1">
+                            <Preview 
+                              el={el} 
+                              onClick={() => setSelectedElement(el)}
+                              isSelected={selectedElement?.id === el.id}
+                            />
+                          </div>
+                          
+                          {/* Hover Actions */}
+                          <AnimatePresence>
+                            {hoveredId === el.id && (
+                              <motion.button
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                onClick={() => setDeletingElement(el)}
+                                className="absolute top-2 right-2 hypr-btn-danger p-1 z-10"
+                                aria-label="Delete"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </motion.button>
+                            )}
+                          </AnimatePresence>
+                        </SortableItem>
                       </div>
 
-                      {/* Mobile: Editor below component */}
+                      {/* Inline Property Editor */}
                       <AnimatePresence>
                         {selectedElement?.id === el.id && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="lg:hidden mt-3"
+                            className="mt-2"
                           >
                             <PropertyEditorInline
                               screenId={screen.id}
@@ -180,27 +158,30 @@ export default function Canvas() {
 }
 
 function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; isSelected?: boolean }) {
-  const baseClass = `bg-white border rounded-lg p-4 hover:border-primary-400 hover:shadow-sm transition-all cursor-pointer ${
-    isSelected ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-gray-200'
+  const baseClass = `hypr-component-preview ${
+    isSelected ? 'hypr-component-preview-selected' : ''
   }`
   
   switch (el.type) {
     case 'TextHeading':
       return (
         <div onClick={onClick} className={baseClass}>
-          <h1 className="text-xl font-bold text-gray-800">{el.text}</h1>
+          <div className="hypr-component-type">HEADING</div>
+          <h1 className="text-lg font-bold text-slate-200">{el.text}</h1>
         </div>
       )
     case 'TextSubheading':
       return (
         <div onClick={onClick} className={baseClass}>
-          <h2 className="text-lg font-semibold text-gray-800">{el.text}</h2>
+          <div className="hypr-component-type">SUBHEADING</div>
+          <h2 className="text-base font-semibold text-slate-200">{el.text}</h2>
         </div>
       )
     case 'TextBody':
       return (
         <div onClick={onClick} className={baseClass}>
-          <p className={`text-gray-700 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
+          <div className="hypr-component-type">BODY</div>
+          <p className={`text-sm text-gray-300 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
         </div>
@@ -208,7 +189,8 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'TextCaption':
       return (
         <div onClick={onClick} className={baseClass}>
-          <p className={`text-sm text-gray-600 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
+          <div className="hypr-component-type">CAPTION</div>
+          <p className={`text-xs text-gray-400 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
         </div>
@@ -216,17 +198,19 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'RichText':
       return (
         <div onClick={onClick} className={baseClass}>
-          <div className="text-gray-700 prose prose-sm max-w-none">
-            <pre className="whitespace-pre-wrap text-sm">{el.text}</pre>
+          <div className="hypr-component-type">RICHTEXT</div>
+          <div className="text-gray-300 text-sm">
+            <pre className="whitespace-pre-wrap text-xs">{el.text}</pre>
           </div>
         </div>
       )
     case 'TextInput':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm">
-            <span className="text-gray-400">
+          <div className="hypr-component-type">INPUT</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview">
+            <span className="text-gray-500 text-xs">
               {el.inputType === 'password' || el.inputType === 'passcode' ? '••••••••' : 
                el.inputType === 'email' ? 'user@example.com' :
                el.inputType === 'phone' ? '+1 (555) 123-4567' :
@@ -241,9 +225,10 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'EmailInput':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm">
-            <span className="text-gray-400">user@example.com</span>
+          <div className="hypr-component-type">EMAIL</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview">
+            <span className="text-gray-500 text-xs">user@example.com</span>
           </div>
           {el.helperText && (
             <p className="text-xs text-gray-500 mt-1">{el.helperText}</p>
@@ -253,9 +238,10 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'PasswordInput':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm">
-            <span className="text-gray-400">••••••••</span>
+          <div className="hypr-component-type">PASSWORD</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview">
+            <span className="text-gray-500 text-xs">••••••••</span>
           </div>
           {el.helperText && (
             <p className="text-xs text-gray-500 mt-1">{el.helperText}</p>
@@ -265,9 +251,10 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'PhoneInput':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm">
-            <span className="text-gray-400">+1 (555) 123-4567</span>
+          <div className="hypr-component-type">PHONE</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview">
+            <span className="text-gray-500 text-xs">+1 (555) 123-4567</span>
           </div>
           {el.helperText && (
             <p className="text-xs text-gray-500 mt-1">{el.helperText}</p>
@@ -277,10 +264,11 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'RadioButtonsGroup':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="hypr-component-type">RADIO</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="flex flex-wrap gap-1">
             {el.options.map((o: any) => (
-              <span key={o.id} className="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-full text-sm text-gray-700">
+              <span key={o.id} className="hypr-chip hypr-chip-inactive text-xs">
                 {o.title}
               </span>
             ))}
@@ -290,19 +278,21 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'TextArea':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 h-20 text-gray-500 text-sm">
-            Multiline text input...
+          <div className="hypr-component-type">TEXTAREA</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview h-12">
+            <span className="text-gray-500 text-xs">Multiline text input...</span>
           </div>
         </div>
       )
     case 'Dropdown':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm flex items-center justify-between">
-            <span>{el.options[0]?.title ?? 'Select...'}</span>
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="hypr-component-type">DROPDOWN</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview flex items-center justify-between">
+            <span className="text-xs">{el.options[0]?.title ?? 'Select...'}</span>
+            <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
@@ -311,12 +301,13 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'CheckboxGroup':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="space-y-2">
-            {el.dataSource?.slice(0, 3).map((option: any) => (
+          <div className="hypr-component-type">CHECKBOX</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="space-y-1">
+            {el.dataSource?.slice(0, 2).map((option: any) => (
               <div key={option.id} className="flex items-center gap-2">
-                <div className="w-4 h-4 border border-gray-300 rounded bg-white"></div>
-                <span className="text-sm text-gray-700">{option.title}</span>
+                <div className="w-3 h-3 border border-gray-500 bg-gray-800"></div>
+                <span className="text-xs text-gray-300">{option.title}</span>
               </div>
             ))}
           </div>
@@ -325,10 +316,11 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'ChipsSelector':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="hypr-component-type">CHIPS</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="flex flex-wrap gap-1">
             {el.dataSource?.slice(0, 3).map((chip: any) => (
-              <span key={chip.id} className="px-3 py-1 bg-gray-100 border border-gray-300 rounded-full text-xs text-gray-700">
+              <span key={chip.id} className="hypr-chip hypr-chip-inactive text-xs">
                 {chip.title}
               </span>
             ))}
@@ -338,25 +330,28 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'OptIn':
       return (
         <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type">OPTIN</div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border border-gray-300 rounded bg-white"></div>
-            <span className="text-sm text-gray-700">{el.label}</span>
+            <div className="w-3 h-3 border border-gray-500 bg-gray-800"></div>
+            <span className="text-xs text-gray-300">{el.label}</span>
           </div>
         </div>
       )
     case 'EmbeddedLink':
       return (
         <div onClick={onClick} className={baseClass}>
-          <span className="text-whatsapp-500 underline cursor-pointer">{el.text}</span>
+          <div className="hypr-component-type">LINK</div>
+          <span className="text-cyan-400 underline text-xs cursor-pointer">{el.text}</span>
         </div>
       )
     case 'DatePicker':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-700 text-sm flex items-center justify-between">
-            <span className="text-gray-500">Select date...</span>
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="hypr-component-type">DATE</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview flex items-center justify-between">
+            <span className="text-gray-500 text-xs">Select date...</span>
+            <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -365,14 +360,15 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'CalendarPicker':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label}</label>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-3">
-            <div className="grid grid-cols-7 gap-1 text-xs text-gray-600">
+          <div className="hypr-component-type">CALENDAR</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
+          <div className="hypr-input-preview">
+            <div className="grid grid-cols-7 gap-px text-xs text-gray-500">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                <div key={i} className="text-center p-1">{day}</div>
+                <div key={i} className="text-center p-px">{day}</div>
               ))}
-              {Array.from({length: 14}, (_, i) => (
-                <div key={i} className="text-center p-1 text-gray-500">{i + 1}</div>
+              {Array.from({length: 7}, (_, i) => (
+                <div key={i} className="text-center p-px">{i + 1}</div>
               ))}
             </div>
           </div>
@@ -381,35 +377,37 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'Image':
       return (
         <div onClick={onClick} className={baseClass}>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-2 text-center">
+          <div className="hypr-component-type">IMAGE</div>
+          <div className="hypr-input-preview text-center">
             {el.src ? (
               <img
                 src={el.src}
                 alt={el.altText || 'Image'}
-                className="mx-auto rounded max-w-full h-32 object-cover"
+                className="mx-auto max-w-full h-16 object-cover"
                 onError={(e) => {
                   const t = e.target as HTMLImageElement
                   t.src = '/t1.png'
                 }}
               />
             ) : (
-              <div className="w-full h-32 flex items-center justify-center text-gray-400">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-full h-16 flex items-center justify-center text-gray-500">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             )}
-            <p className="text-xs text-gray-500 mt-2">{el.altText || 'Image'}</p>
+            <p className="text-xs text-gray-500 mt-1">{el.altText || 'Image'}</p>
           </div>
         </div>
       )
     case 'ImageCarousel':
       return (
         <div onClick={onClick} className={baseClass}>
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-2">
-            <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
-              {el.images?.slice(0, 5).map((img: any, i: number) => (
-                <div key={i} className="flex-shrink-0 w-20 h-14 rounded overflow-hidden border border-gray-300">
+          <div className="hypr-component-type">CAROUSEL</div>
+          <div className="hypr-input-preview">
+            <div className="flex gap-1 mb-1 overflow-x-auto">
+              {el.images?.slice(0, 3).map((img: any, i: number) => (
+                <div key={i} className="flex-shrink-0 w-12 h-8 border border-gray-600 overflow-hidden">
                   <img
                     src={img.src}
                     alt={img.altText || `img-${i}`}
@@ -419,50 +417,42 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 text-center">Image Carousel ({el.images?.length || 0} images)</p>
+            <p className="text-xs text-gray-500 text-center">Carousel ({el.images?.length || 0})</p>
           </div>
         </div>
       )
     case 'PhotoPicker':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm font-medium text-gray-700 block mb-2">{el.label || 'Photo Picker'}</label>
-          {el.description && <p className="text-xs text-gray-500 mb-2">{el.description}</p>}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
-            <div className="w-10 h-10 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-xl">📷</span>
+          <div className="hypr-component-type">PHOTO_PICKER</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label || 'Photo Picker'}</label>
+          {el.description && <p className="text-xs text-gray-500 mb-1">{el.description}</p>}
+          <div className="hypr-input-preview text-center">
+            <div className="w-6 h-6 mx-auto mb-1 bg-blue-900 rounded-full flex items-center justify-center">
+              <span className="text-xs">📷</span>
             </div>
-            <p className="text-xs text-gray-600">Upload Photos</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400">Upload Photos</p>
+            <p className="text-xs text-gray-500">
               {el.photoSource === 'camera' ? 'Camera' : el.photoSource === 'gallery' ? 'Gallery' : 'Camera/Gallery'}
             </p>
-            {(el.minUploadedPhotos || el.maxUploadedPhotos) && (
-              <p className="text-xs text-gray-400 mt-1">
-                {el.minUploadedPhotos || 0}-{el.maxUploadedPhotos || 30} photos
-              </p>
-            )}
           </div>
         </div>
       )
     case 'DocumentPicker':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm font-medium text-gray-700 block mb-2">{el.label || 'Document Picker'}</label>
-          {el.description && <p className="text-xs text-gray-500 mb-2">{el.description}</p>}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
-            <div className="w-10 h-10 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-xl">📄</span>
+          <div className="hypr-component-type">DOC_PICKER</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label || 'Document Picker'}</label>
+          {el.description && <p className="text-xs text-gray-500 mb-1">{el.description}</p>}
+          <div className="hypr-input-preview text-center">
+            <div className="w-6 h-6 mx-auto mb-1 bg-green-900 rounded-full flex items-center justify-center">
+              <span className="text-xs">📄</span>
             </div>
-            <p className="text-xs text-gray-600">Upload Documents</p>
+            <p className="text-xs text-gray-400">Upload Documents</p>
             {el.allowedMimeTypes && el.allowedMimeTypes.length > 0 && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-500">
                 {el.allowedMimeTypes.slice(0, 2).join(', ')}
                 {el.allowedMimeTypes.length > 2 && '...'}
-              </p>
-            )}
-            {(el.minUploadedDocuments || el.maxUploadedDocuments) && (
-              <p className="text-xs text-gray-400 mt-1">
-                {el.minUploadedDocuments || 0}-{el.maxUploadedDocuments || 30} docs
               </p>
             )}
           </div>
@@ -471,18 +461,19 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'NavigationList':
       return (
         <div onClick={onClick} className={baseClass}>
-          <label className="text-sm text-gray-700 block mb-2">{el.label || 'Navigation List'}</label>
-          <div className="space-y-2">
+          <div className="hypr-component-type">NAV_LIST</div>
+          <label className="text-xs text-gray-400 block mb-1">{el.label || 'Navigation List'}</label>
+          <div className="space-y-1">
             {el.listItems?.slice(0, 2).map((item: any) => (
-              <div key={item.id} className="flex items-center gap-3 p-2 bg-white border border-gray-300 rounded">
-                <div className="w-8 h-8 bg-gray-100 rounded border border-gray-300"></div>
+              <div key={item.id} className="flex items-center gap-2 p-1 bg-gray-800 border border-gray-600">
+                <div className="w-4 h-4 bg-gray-700 border border-gray-600"></div>
                 <div className="flex-1">
-                  <div className="text-sm text-gray-700">{item.mainContent?.title}</div>
+                  <div className="text-xs text-gray-300">{item.mainContent?.title}</div>
                   {item.mainContent?.description && (
                     <div className="text-xs text-gray-500">{item.mainContent.description}</div>
                   )}
                 </div>
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -493,7 +484,8 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
     case 'Footer':
       return (
         <div onClick={onClick} className={baseClass}>
-          <button className="w-full btn-primary py-3">
+          <div className="hypr-component-type">FOOTER</div>
+          <button className="w-full hypr-btn-primary py-2 text-xs">
             {el.label}
           </button>
         </div>

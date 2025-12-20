@@ -1,12 +1,11 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Moon, Sun, Download, Plus, Code2, MessageCircle, Send, QrCode, Globe, Library, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import ScreenDesigner from './screens/ScreenDesigner'
+import HyprScreenDesigner from './components/HyprScreenDesigner'
 import JsonPreviewPanel from './components/JsonPreviewPanel'
 import WhatsAppPreview from './components/WhatsAppPreview'
 import FlowXPPanel from './components/FlowXPPanel'
 import FlowPreviewPane from './components/FlowPreviewPane'
-import QRCodeGenerator from './components/QRCodeGenerator'
 import QRFlowInitiator from './components/QRFlowInitiator'
 import WebhookSetup from './components/WebhookSetup'
 import MessageLibrary from './components/MessageLibrary'
@@ -19,9 +18,11 @@ import { WhatsAppService } from './utils/whatsappService'
 import { backendApiService } from './utils/backendApiService'
 import ToastContainer from './components/ToastContainer'
 import { ToastData, ToastType } from './components/Toast'
+import ScreenSettings from './components/ScreenSettings'
+import Canvas from './components/Canvas'
 
 export default function App() {
-  const { screens, addScreen } = useFlowStore()
+  const { screens, addScreen, selectScreen, selectedScreenId } = useFlowStore()
   const { messages, triggers } = useMessageLibraryStore()
 
   const [showJsonPreview, setShowJsonPreview] = useState(false)
@@ -48,6 +49,11 @@ export default function App() {
   const [activeFlowId, setActiveFlowId] = useState<string>('')
   const [toasts, setToasts] = useState<ToastData[]>([])
   const [flowActivationMessages, setFlowActivationMessages] = useState<Record<string, string>>({})
+  
+  // Hyprland-inspired layout state
+  const [leftPanelWidth, setLeftPanelWidth] = useState(300)
+  const [rightPanelWidth, setRightPanelWidth] = useState(350)
+  const [isResizing, setIsResizing] = useState(false)
   
   // Get business phone number from environment variables
   const businessPhoneNumber = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '15550617327'
@@ -747,160 +753,197 @@ Preview URL: ${result.preview_url || 'Not available'}
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Sticky Header */}
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm"
-      >
-        <div className="container mx-auto px-4 py-3 lg:py-4">
-          <div className="flex items-center justify-between flex-wrap gap-3 lg:gap-4">
-            {/* Logo & Title */}
-            <div className="flex items-center gap-2 lg:gap-3">
-              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-whatsapp-500 to-whatsapp-600 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-lg lg:text-xl font-bold text-gray-800">
-                  WhatsApp Flow Builder
-                </h1>
-                <p className="text-xs text-gray-500 hidden sm:block">Visual JSON Designer v7.2</p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-1.5 lg:gap-2 flex-wrap">
+    <div className="hypr-container">
+      {/* Hyprland-inspired Header Bar */}
+      <header className="hypr-header">
+        <div className="flex items-center gap-4">
+          {/* Workspace indicator */}
+          <div className="flex items-center gap-2">
+            <div className="hypr-status-dot hypr-status-active"></div>
+            <span className="hypr-title">FLOW_BUILDER</span>
+          </div>
+          
+          {/* Screen tabs */}
+          <div className="flex">
+            {screens.map((screen, idx) => (
               <button
-                onClick={() => addScreen()}
-                className="btn-secondary flex items-center gap-2"
+                key={screen.id}
+                onClick={() => selectScreen(screen.id)}
+                className={`hypr-tab ${
+                  screen.id === selectedScreenId ? 'hypr-tab-active' : 'hypr-tab-inactive'
+                }`}
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Add Screen</span>
+                {screen.id}
               </button>
-
-
-
-
-              <button
-                onClick={() => setShowWhatsAppPreview(!showWhatsAppPreview)}
-                className="btn-secondary flex items-center gap-2"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">WhatsApp Preview</span>
-              </button>
-
-              <button
-                onClick={() => setShowJsonPreview(!showJsonPreview)}
-                className="btn-secondary flex items-center gap-2"
-              >
-                <Code2 className="w-4 h-4" />
-                <span className="hidden sm:inline">JSON Preview</span>
-              </button>
-
-              <button
-                onClick={() => setShowFlowXP(!showFlowXP)}
-                className={`btn-secondary flex items-center gap-2 ${showFlowXP ? 'bg-primary-500/20 border-primary-500' : ''}`}
-                title="Flow Experience - Configure message sequence"
-              >
-                <Zap className="w-4 h-4" />
-                <span className="hidden sm:inline">FlowXP</span>
-              </button>
-
-              <button
-                onClick={handleCreateFlowFromJson}
-                className="btn-primary flex items-center gap-2"
-                disabled={screens.length === 0 || isCreatingFlow}
-                title="Create WhatsApp Flow using JSON from preview"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {isCreatingFlow ? 'Creating...' : 'Create Flow'}
-                </span>
-              </button>
-
-              <button
-                onClick={handleGetAllFlows}
-                className="btn-secondary flex items-center gap-2"
-                disabled={isLoadingFlows}
-                title="Retrieve all flows from WhatsApp Business"
-              >
-                🔍
-                <span className="hidden sm:inline">
-                  {isLoadingFlows ? 'Loading...' : 'Get All Flows'}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setShowFlowsPanel(!showFlowsPanel)}
-                className={`btn-secondary flex items-center gap-2 ${showFlowsPanel ? 'bg-primary-500/20 border-primary-500' : ''}`}
-                title="Toggle flows management panel"
-              >
-                📋
-                <span className="hidden sm:inline">Manage Flows</span>
-              </button>
-
-              <button
-                onClick={() => setShowQRCodePanel(!showQRCodePanel)}
-                className={`btn-secondary flex items-center gap-2 ${showQRCodePanel ? 'bg-primary-500/20 border-primary-500' : ''}`}
-                title="Generate Flow QR Code"
-              >
-                <QrCode className="w-4 h-4" />
-                <span className="hidden sm:inline">Flow QR</span>
-              </button>
-
-              <button
-                onClick={() => setShowWebhookSetup(!showWebhookSetup)}
-                className={`btn-secondary flex items-center gap-2 ${showWebhookSetup ? 'bg-primary-500/20 border-primary-500' : ''}`}
-                title="Webhook Setup & Backend Integration"
-              >
-                <Globe className="w-4 h-4" />
-                <span className="hidden sm:inline">Webhooks</span>
-              </button>
-
-              <button
-                onClick={() => setShowMessageLibrary(!showMessageLibrary)}
-                className={`btn-secondary flex items-center gap-2 ${showMessageLibrary ? 'bg-primary-500/20 border-primary-500' : ''}`}
-                title="Message & Trigger Library"
-              >
-                <Library className="w-4 h-4" />
-                <span className="hidden sm:inline">Message Library</span>
-              </button>
-
-
-              {activeFlowId && (
-                <button
-                  onClick={() => {
-                    const customerPhone = prompt('Enter customer phone number (with country code, e.g., 918281348343):')
-                    if (customerPhone) {
-                      handleSendActiveFlow(customerPhone)
-                    }
-                  }}
-                  className="btn-primary flex items-center gap-2 bg-whatsapp-500 hover:bg-whatsapp-600"
-                  title="Send active flow to a customer"
-                >
-                  <Send className="w-4 h-4" />
-                  <span className="hidden sm:inline">Send Active Flow</span>
-                </button>
-              )}
-
-            </div>
+            ))}
+            <button
+              onClick={() => addScreen()}
+              className="hypr-tab hypr-tab-inactive"
+              title="Add Screen [Ctrl+N]"
+            >
+              +
+            </button>
           </div>
         </div>
-      </motion.header>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6">
-        <ScreenDesigner 
-          flowName={flowName}
-          setFlowName={setFlowName}
-          customMessage={customMessage}
-          setCustomMessage={setCustomMessage}
+        {/* Header actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowJsonPreview(!showJsonPreview)}
+            className={`hypr-btn ${showJsonPreview ? 'hypr-btn-primary' : ''}`}
+            title="JSON Preview [Ctrl+J]"
+          >
+            JSON
+          </button>
+          
+          <button
+            onClick={() => setShowWhatsAppPreview(!showWhatsAppPreview)}
+            className={`hypr-btn ${showWhatsAppPreview ? 'hypr-btn-primary' : ''}`}
+            title="WhatsApp Preview [Ctrl+P]"
+          >
+            PREVIEW
+          </button>
+          
+          <button
+            onClick={() => setShowFlowXP(!showFlowXP)}
+            className={`hypr-btn ${showFlowXP ? 'hypr-btn-primary' : ''}`}
+            title="Flow Experience [Ctrl+E]"
+          >
+            FLOWXP
+          </button>
+          
+          <button
+            onClick={handleCreateFlowFromJson}
+            className="hypr-btn-success"
+            disabled={screens.length === 0 || isCreatingFlow}
+            title="Create Flow [Ctrl+Enter]"
+          >
+            {isCreatingFlow ? 'CREATING...' : 'CREATE'}
+          </button>
+          
+          <div className="hypr-divider-vertical"></div>
+          
+          <button
+            onClick={handleGetAllFlows}
+            className="hypr-btn"
+            disabled={isLoadingFlows}
+            title="Get All Flows [Ctrl+G]"
+          >
+            {isLoadingFlows ? 'LOADING...' : 'FLOWS'}
+          </button>
+          
+          <button
+            onClick={() => setShowQRCodePanel(!showQRCodePanel)}
+            className={`hypr-btn ${showQRCodePanel ? 'hypr-btn-primary' : ''}`}
+            title="QR Code [Ctrl+Q]"
+          >
+            QR
+          </button>
+          
+          <button
+            onClick={() => setShowWebhookSetup(!showWebhookSetup)}
+            className={`hypr-btn ${showWebhookSetup ? 'hypr-btn-primary' : ''}`}
+            title="Webhooks [Ctrl+W]"
+          >
+            HOOKS
+          </button>
+          
+          <button
+            onClick={() => setShowMessageLibrary(!showMessageLibrary)}
+            className={`hypr-btn ${showMessageLibrary ? 'hypr-btn-primary' : ''}`}
+            title="Message Library [Ctrl+M]"
+          >
+            MSGS
+          </button>
+        </div>
+      </header>
+
+      {/* Main tiled layout */}
+      <div className="hypr-main">
+        {/* Left rail - Screens + Components */}
+        <div 
+          className="hypr-sidebar tile-left"
+          style={{ width: `${leftPanelWidth}px` }}
+        >
+          <HyprScreenDesigner 
+            flowName={flowName}
+            setFlowName={setFlowName}
+            customMessage={customMessage}
+            setCustomMessage={setCustomMessage}
+          />
+        </div>
+
+        {/* Resizer */}
+        <div 
+          className="hypr-resizer"
+          onMouseDown={(e) => {
+            setIsResizing(true)
+            const startX = e.clientX
+            const startWidth = leftPanelWidth
+            
+            const handleMouseMove = (e: MouseEvent) => {
+              const newWidth = Math.max(200, Math.min(500, startWidth + (e.clientX - startX)))
+              setLeftPanelWidth(newWidth)
+            }
+            
+            const handleMouseUp = () => {
+              setIsResizing(false)
+              document.removeEventListener('mousemove', handleMouseMove)
+              document.removeEventListener('mouseup', handleMouseUp)
+            }
+            
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+          }}
         />
 
-      </main>
+        {/* Center - Canvas */}
+        <div className="hypr-content tile-center">
+          <Canvas key={selectedScreenId} />
+        </div>
+
+        {/* Resizer */}
+        <div 
+          className="hypr-resizer"
+          onMouseDown={(e) => {
+            setIsResizing(true)
+            const startX = e.clientX
+            const startWidth = rightPanelWidth
+            
+            const handleMouseMove = (e: MouseEvent) => {
+              const newWidth = Math.max(250, Math.min(600, startWidth - (e.clientX - startX)))
+              setRightPanelWidth(newWidth)
+            }
+            
+            const handleMouseUp = () => {
+              setIsResizing(false)
+              document.removeEventListener('mousemove', handleMouseMove)
+              document.removeEventListener('mouseup', handleMouseUp)
+            }
+            
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+          }}
+        />
+
+        {/* Right rail - Inspector */}
+        <div 
+          className="hypr-sidebar-right tile-right"
+          style={{ width: `${rightPanelWidth}px` }}
+        >
+          <div className="hypr-panel h-full overflow-hidden">
+            <ScreenSettings 
+              flowName={flowName}
+              setFlowName={setFlowName}
+              customMessage={customMessage}
+              setCustomMessage={setCustomMessage}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       {/* WhatsApp Preview Panel */}
       <AnimatePresence>

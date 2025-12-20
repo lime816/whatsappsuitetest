@@ -12,7 +12,6 @@ interface ScreenSettingsProps {
 
 export default function ScreenSettings({ flowName, setFlowName, customMessage, setCustomMessage }: ScreenSettingsProps) {
   const { screens, selectedScreenId, updateScreen } = useFlowStore()
-  const [isOpen, setIsOpen] = useState(false)
   const screen = screens.find(s => s.id === selectedScreenId)
   
   const [formData, setFormData] = useState({
@@ -29,11 +28,6 @@ export default function ScreenSettings({ flowName, setFlowName, customMessage, s
     }
   }, [screen])
 
-  const handleSave = () => {
-    if (!screen) return
-    updateScreen(screen.id, formData)
-  }
-
   // Auto-save on change
   const updateField = (field: string, value: any) => {
     const updated = { ...formData, [field]: value }
@@ -43,136 +37,144 @@ export default function ScreenSettings({ flowName, setFlowName, customMessage, s
     }
   }
 
-  if (!screen) return null
+  if (!screen) return (
+    <div className="hypr-panel flex items-center justify-center">
+      <div className="text-center">
+        <div className="hypr-status-dot hypr-status-inactive mb-2"></div>
+        <p className="hypr-text-muted">NO_SCREEN_SELECTED</p>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="h-full flex flex-col bg-white border-l border-gray-200">
+    <div className="hypr-panel h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b border-gray-200">
-        <Settings className="w-5 h-5 text-primary-600" />
-        <h3 className="text-base font-semibold text-gray-800">Screen Settings</h3>
+      <div className="hypr-section-header">
+        <span className="hypr-section-title">INSPECTOR</span>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <div className="flex overflow-x-auto">
-          {screens.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                const { selectScreen } = useFlowStore.getState()
-                selectScreen(s.id)
-              }}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                s.id === selectedScreenId
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {s.id}
-            </button>
-          ))}
-        </div>
+      {/* Screen Tabs */}
+      <div className="hypr-tabs">
+        {screens.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => {
+              const { selectScreen } = useFlowStore.getState()
+              selectScreen(s.id)
+            }}
+            className={`hypr-tab ${
+              s.id === selectedScreenId ? 'hypr-tab-active' : 'hypr-tab-inactive'
+            }`}
+          >
+            {s.id}
+          </button>
+        ))}
       </div>
 
-      {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">
-            Screen ID
-          </label>
-          <input
-            type="text"
-            value={formData.id}
-            onChange={(e) => updateField('id', e.target.value)}
-            className="input-field text-sm"
-            placeholder="e.g., RECOMMEND"
-          />
-        </div>
+      <div className="hypr-divider"></div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => updateField('title', e.target.value)}
-            className="input-field text-sm"
-            placeholder="e.g., Feedback 1 of 2"
-          />
+      {/* Screen Properties */}
+      <div className="hypr-section">
+        <div className="hypr-section-header">
+          <span className="hypr-section-title">SCREEN_PROPS</span>
         </div>
-
-        {/* Flow Configuration Section */}
-        <div className="border-t border-gray-200 pt-4 mt-4">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="w-4 h-4 text-primary-600" />
-            <h4 className="text-sm font-semibold text-gray-800">Flow Configuration</h4>
+        
+        <div className="hypr-section-content space-y-3">
+          <div>
+            <label className="hypr-label">SCREEN_ID</label>
+            <input
+              type="text"
+              value={formData.id}
+              onChange={(e) => updateField('id', e.target.value)}
+              className="hypr-input"
+              placeholder="e.g., RECOMMEND"
+            />
           </div>
-          
-          <div className="space-y-4">
-            {/* Flow Name */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
-                Flow Name
-              </label>
-              <input
-                type="text"
-                value={flowName}
-                onChange={(e) => setFlowName(e.target.value)}
-                className="input-field text-sm"
-                placeholder="Enter your flow name..."
-              />
-              <p className="text-xs text-gray-500 mt-1">This will be the name of your WhatsApp Flow</p>
-            </div>
 
-            {/* Activation Message */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
-                Activation Message
-              </label>
-              <textarea
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                className="input-field text-sm resize-none"
-                rows={3}
-                placeholder="Enter the message that will activate your flow..."
-              />
-              <p className="text-xs text-gray-500 mt-1">This message will be sent to activate your flow</p>
-            </div>
+          <div>
+            <label className="hypr-label">TITLE</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              className="hypr-input"
+              placeholder="e.g., Feedback 1 of 2"
+            />
+          </div>
+        </div>
+      </div>
 
-            {/* Quick Presets */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">Quick Presets</label>
-              <div className="flex flex-wrap gap-1">
-                <button
-                  onClick={() => setCustomMessage('Please complete this form to continue with your registration.')}
-                  className="text-xs px-2 py-1 bg-blue-600 text-blue-100 rounded hover:bg-blue-500 transition-colors"
-                >
-                  Registration
-                </button>
-                <button
-                  onClick={() => setCustomMessage('Fill out this survey to share your feedback with us.')}
-                  className="text-xs px-2 py-1 bg-green-600 text-green-100 rounded hover:bg-green-500 transition-colors"
-                >
-                  Survey
-                </button>
-                <button
-                  onClick={() => setCustomMessage('Complete this application form to get started.')}
-                  className="text-xs px-2 py-1 bg-purple-600 text-purple-100 rounded hover:bg-purple-500 transition-colors"
-                >
-                  Application
-                </button>
-              </div>
-            </div>
+      <div className="hypr-divider"></div>
 
-            {/* Preview */}
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <h5 className="text-xs font-medium text-gray-700 mb-2">Preview:</h5>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p><span className="text-gray-800">Flow:</span> {flowName || 'Unnamed Flow'}</p>
-                <p><span className="text-gray-800">Message:</span> {customMessage || 'No activation message set'}</p>
-              </div>
+      {/* Flow Configuration */}
+      <div className="hypr-section flex-1">
+        <div className="hypr-section-header">
+          <span className="hypr-section-title">FLOW_CONFIG</span>
+        </div>
+        
+        <div className="hypr-section-content space-y-3">
+          <div>
+            <label className="hypr-label">FLOW_NAME</label>
+            <input
+              type="text"
+              value={flowName}
+              onChange={(e) => setFlowName(e.target.value)}
+              className="hypr-input"
+              placeholder="Enter flow name..."
+            />
+            <p className="hypr-help-text">WhatsApp Flow identifier</p>
+          </div>
+
+          <div>
+            <label className="hypr-label">ACTIVATION_MSG</label>
+            <textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              className="hypr-textarea"
+              rows={3}
+              placeholder="Enter activation message..."
+            />
+            <p className="hypr-help-text">Message sent to activate flow</p>
+          </div>
+
+          {/* Quick Presets */}
+          <div>
+            <label className="hypr-label">PRESETS</label>
+            <div className="flex flex-wrap gap-1">
+              <button
+                onClick={() => setCustomMessage('Please complete this form to continue with your registration.')}
+                className="hypr-preset-btn"
+              >
+                REG
+              </button>
+              <button
+                onClick={() => setCustomMessage('Fill out this survey to share your feedback with us.')}
+                className="hypr-preset-btn"
+              >
+                SURVEY
+              </button>
+              <button
+                onClick={() => setCustomMessage('Complete this application form to get started.')}
+                className="hypr-preset-btn"
+              >
+                APP
+              </button>
+            </div>
+          </div>
+
+          {/* Status Display */}
+          <div className="hypr-status-panel">
+            <div className="hypr-status-row">
+              <span className="hypr-status-label">FLOW:</span>
+              <span className="hypr-status-value">{flowName || 'UNNAMED'}</span>
+            </div>
+            <div className="hypr-status-row">
+              <span className="hypr-status-label">MSG:</span>
+              <span className="hypr-status-value truncate">{customMessage || 'NO_MESSAGE'}</span>
+            </div>
+            <div className="hypr-status-row">
+              <span className="hypr-status-label">COMPONENTS:</span>
+              <span className="hypr-status-value">{screen.elements.length}</span>
             </div>
           </div>
         </div>
