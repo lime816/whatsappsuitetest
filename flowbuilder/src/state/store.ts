@@ -329,6 +329,81 @@ function createDefaultElement(type: ElementType): AnyElement {
       }
     case 'RichText':
       return { id, type, text: '# Rich Text\n\nThis is **bold** and *italic* text.' }
+    case 'If':
+      return { 
+        id, 
+        type, 
+        condition: '${data.show_content}', 
+        then: [
+          {
+            id: nanoid(6),
+            type: 'TextBody',
+            text: 'Content shown when condition is true',
+            fontWeight: 'normal',
+            strikethrough: false,
+            visible: true,
+            markdown: false
+          }
+        ],
+        else: [
+          {
+            id: nanoid(6),
+            type: 'TextBody',
+            text: 'Content shown when condition is false',
+            fontWeight: 'normal',
+            strikethrough: false,
+            visible: true,
+            markdown: false
+          }
+        ]
+      }
+    case 'Switch':
+      return { 
+        id, 
+        type, 
+        value: '${data.user_type}',
+        cases: [
+          {
+            case: 'admin',
+            elements: [
+              {
+                id: nanoid(6),
+                type: 'TextBody',
+                text: 'Admin content',
+                fontWeight: 'normal',
+                strikethrough: false,
+                visible: true,
+                markdown: false
+              }
+            ]
+          },
+          {
+            case: 'user',
+            elements: [
+              {
+                id: nanoid(6),
+                type: 'TextBody',
+                text: 'User content',
+                fontWeight: 'normal',
+                strikethrough: false,
+                visible: true,
+                markdown: false
+              }
+            ]
+          }
+        ],
+        default: [
+          {
+            id: nanoid(6),
+            type: 'TextBody',
+            text: 'Default content',
+            fontWeight: 'normal',
+            strikethrough: false,
+            visible: true,
+            markdown: false
+          }
+        ]
+      }
     case 'TextInput':
       return { id, type, label: 'Text Input', name: 'text_input', required: true, inputType: 'text' }
     case 'EmailInput':

@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, Plus, Trash2, Settings } from 'lucide-react'
+import { X, Plus, Trash2, Settings, HelpCircle, Info } from 'lucide-react'
 import { useFlowStore } from '../state/store'
 import type { AnyElement } from '../types'
 
@@ -7,6 +7,156 @@ interface PropertyEditorInlineProps {
   screenId: string
   element: AnyElement
   onClose: () => void
+}
+
+// Help content for component properties
+interface HelpInfo {
+  title: string
+  description: string
+  examples?: string[]
+  options?: Record<string, string>
+  limit?: number
+}
+
+const HELP_CONTENT: Record<string, HelpInfo> = {
+  text: {
+    title: 'Text Content',
+    description: 'The main text content for this component. Supports dynamic data binding using ${data.field_name} syntax.',
+    examples: ['Hello World', '${data.user_name}', 'Welcome ${data.first_name}!']
+  },
+  label: {
+    title: 'Field Label',
+    description: 'The label displayed above the input field. Keep it concise and descriptive.',
+    examples: ['Full Name', 'Email Address', 'Phone Number'],
+    limit: 40
+  },
+  name: {
+    title: 'Field Name',
+    description: 'Unique identifier for this field. Used in data collection and dynamic binding. Use snake_case format.',
+    examples: ['full_name', 'email_address', 'phone_number']
+  },
+  helperText: {
+    title: 'Helper Text',
+    description: 'Additional guidance text shown below the field to help users understand what to enter.',
+    examples: ['Enter your full legal name', 'We\'ll never share your email', 'Include country code'],
+    limit: 80
+  },
+  condition: {
+    title: 'If Condition',
+    description: 'Boolean expression that determines when to show the "then" content. Use ${data.field} syntax.',
+    examples: ['${data.is_premium}', '${data.age} > 18', '${data.country} == "US"']
+  },
+  value: {
+    title: 'Switch Value',
+    description: 'Expression to evaluate and match against case values. Use ${data.field} syntax.',
+    examples: ['${data.user_type}', '${data.subscription_plan}', '${data.country}']
+  },
+  visible: {
+    title: 'Visibility',
+    description: 'Controls whether this component is visible. Can be dynamic using ${data.field} syntax.',
+    examples: ['true', 'false', '${data.show_field}']
+  },
+  required: {
+    title: 'Required Field',
+    description: 'When enabled, users must fill this field before proceeding. Required fields show a red asterisk.'
+  },
+  inputType: {
+    title: 'Input Type',
+    description: 'Determines the type of input and validation applied.',
+    options: {
+      text: 'General text input',
+      email: 'Email address with validation',
+      password: 'Hidden password input',
+      phone: 'Phone number input',
+      number: 'Numeric input only'
+    }
+  },
+  fontWeight: {
+    title: 'Font Weight',
+    description: 'Controls the visual weight of the text.',
+    options: {
+      normal: 'Regular text weight',
+      bold: 'Bold text',
+      italic: 'Italic text',
+      bold_italic: 'Bold and italic text'
+    }
+  }
+}
+
+function HelpTooltip({ content, children }: { content: keyof typeof HELP_CONTENT; children: React.ReactNode }) {
+  const [showTooltip, setShowTooltip] = React.useState(false)
+  const helpInfo = HELP_CONTENT[content]
+
+  if (!helpInfo) return <>{children}</>
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-1">
+        {children}
+        <button
+          type="button"
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          className="text-slate-400 hover:text-slate-300 transition-colors"
+        >
+          <HelpCircle className="w-3 h-3" />
+        </button>
+      </div>
+      
+      {showTooltip && (
+        <div className="absolute top-6 left-0 z-50 bg-slate-800 border border-slate-600 rounded-lg p-3 text-xs text-white shadow-xl max-w-xs">
+          <div className="font-semibold text-blue-400 mb-1">{helpInfo.title}</div>
+          <div className="text-slate-300 mb-2">{helpInfo.description}</div>
+          
+          {helpInfo.examples && (
+            <div className="mb-2">
+              <div className="text-slate-400 font-medium mb-1">Examples:</div>
+              {helpInfo.examples.map((example: string, idx: number) => (
+                <div key={idx} className="text-green-400 font-mono text-xs">• {example}</div>
+              ))}
+            </div>
+          )}
+          
+          {helpInfo.options && (
+            <div className="mb-2">
+              <div className="text-slate-400 font-medium mb-1">Options:</div>
+              {Object.entries(helpInfo.options).map(([key, desc]) => (
+                <div key={key} className="text-slate-300">
+                  <span className="text-yellow-400 font-mono">{key}</span>: {desc}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {helpInfo.limit && (
+            <div className="text-yellow-400 text-xs">
+              <Info className="w-3 h-3 inline mr-1" />
+              Character limit: {helpInfo.limit}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CharacterCounter({ text, limit, label }: { text: string; limit: number; label?: string }) {
+  const length = text?.length || 0
+  const isOverLimit = length > limit
+  const isNearLimit = length > limit * 0.9
+
+  return (
+    <div className={`text-xs mt-1 flex justify-between items-center ${
+      isOverLimit ? 'text-red-400' : isNearLimit ? 'text-yellow-400' : 'text-slate-500'
+    }`}>
+      <span>{label && `${label}: `}Dynamic data binding: ${'${data.field_name}'}</span>
+      <span className="font-mono">
+        {length}/{limit}
+        {isOverLimit && <span className="ml-1 font-semibold">OVER</span>}
+        {isNearLimit && !isOverLimit && <span className="ml-1">NEAR</span>}
+      </span>
+    </div>
+  )
 }
 
 export default function PropertyEditorInline({ screenId, element, onClose }: PropertyEditorInlineProps) {
@@ -60,25 +210,31 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
+            <HelpTooltip content="text">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Text (max 80 chars)</label>
+            </HelpTooltip>
             <input
               type="text"
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className="input-field text-sm"
+              className={`input-field text-sm ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
               placeholder="Enter heading text"
+              maxLength={80}
             />
+            <CharacterCounter text={el.text} limit={80} />
           </div>
           <div>
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
-              <input
-                type="checkbox"
-                checked={el.visible !== false}
-                onChange={(e) => update('visible', e.target.checked)}
-                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
-              />
-              Visible
-            </label>
+            <HelpTooltip content="visible">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={el.visible !== false}
+                  onChange={(e) => update('visible', e.target.checked)}
+                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+                />
+                Visible
+              </label>
+            </HelpTooltip>
             <p className="text-xs text-slate-500 mt-1">
               Dynamic: ${'{data.is_visible}'} | Default: True
             </p>
@@ -89,25 +245,31 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
+            <HelpTooltip content="text">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Text (max 80 chars)</label>
+            </HelpTooltip>
             <input
               type="text"
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className="input-field text-sm"
+              className={`input-field text-sm ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
               placeholder="Enter subheading text"
+              maxLength={80}
             />
+            <CharacterCounter text={el.text} limit={80} />
           </div>
           <div>
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
-              <input
-                type="checkbox"
-                checked={el.visible !== false}
-                onChange={(e) => update('visible', e.target.checked)}
-                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
-              />
-              Visible
-            </label>
+            <HelpTooltip content="visible">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={el.visible !== false}
+                  onChange={(e) => update('visible', e.target.checked)}
+                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+                />
+                Visible
+              </label>
+            </HelpTooltip>
             <p className="text-xs text-slate-500 mt-1">
               Dynamic: ${'{data.is_visible}'} | Default: True
             </p>
@@ -312,17 +474,23 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
       return (
         <>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Label</label>
+            <HelpTooltip content="label">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Label (max 40 chars)</label>
+            </HelpTooltip>
             <input
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={`input-field text-sm ${el.label && el.label.length > 40 ? 'border-red-500' : ''}`}
               placeholder="Input label"
+              maxLength={40}
             />
+            <CharacterCounter text={el.label} limit={40} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
+            <HelpTooltip content="name">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
+            </HelpTooltip>
             <input
               type="text"
               value={el.name}
@@ -330,9 +498,14 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               className="input-field text-sm"
               placeholder="field_name"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Use snake_case format (e.g., full_name, email_address)
+            </p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Input Type</label>
+            <HelpTooltip content="inputType">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Input Type</label>
+            </HelpTooltip>
             <select
               value={el.inputType || 'text'}
               onChange={(e) => update('inputType', e.target.value)}
@@ -355,19 +528,23 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               className="input-field text-sm"
               placeholder="^[0-9]+$"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Regular expression for input validation
+            </p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Helper Text</label>
+            <HelpTooltip content="helperText">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Helper Text (max 80 chars)</label>
+            </HelpTooltip>
             <input
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={`input-field text-sm ${el.helperText && el.helperText.length > 80 ? 'border-red-500' : ''}`}
               placeholder="E.g. Enter your phone number"
+              maxLength={80}
             />
-            <p className="text-xs text-slate-500 mt-1">
-              Dynamic: ${'{data.helper_text}'}
-            </p>
+            <CharacterCounter text={el.helperText || ''} limit={80} />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Label Variant</label>
@@ -411,14 +588,16 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`required-${el.id}`}
-              checked={!!el.required}
-              onChange={(e) => update('required', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
-            />
-            <label htmlFor={`required-${el.id}`} className="text-xs text-slate-300">Required field</label>
+            <HelpTooltip content="required">
+              <input
+                type="checkbox"
+                id={`required-${el.id}`}
+                checked={!!el.required}
+                onChange={(e) => update('required', e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+              />
+              <label htmlFor={`required-${el.id}`} className="text-xs text-slate-300">Required field</label>
+            </HelpTooltip>
           </div>
         </>
       )
@@ -1722,6 +1901,163 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             </p>
           </div>
         </>
+      )
+
+    case 'If':
+      return (
+        <div className="space-y-3">
+          <div>
+            <HelpTooltip content="condition">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Condition</label>
+            </HelpTooltip>
+            <input
+              type="text"
+              value={el.condition}
+              onChange={(e) => update('condition', e.target.value)}
+              className="input-field text-sm font-mono"
+              placeholder="${data.show_content}"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic expression that evaluates to true/false
+            </p>
+          </div>
+          
+          <div>
+            <HelpTooltip content="visible">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={el.visible !== false}
+                  onChange={(e) => update('visible', e.target.checked)}
+                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+                />
+                Visible
+              </label>
+            </HelpTooltip>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
+          </div>
+          
+          <div className="border-t border-slate-600 pt-3">
+            <p className="text-xs text-slate-400 mb-2">
+              Configure "then" and "else" content by editing the nested elements in the preview
+            </p>
+            <div className="text-xs text-slate-500 space-y-1">
+              <div>• Then: {el.then?.length || 0} element(s)</div>
+              <div>• Else: {el.else?.length || 0} element(s)</div>
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'Switch':
+      return (
+        <div className="space-y-3">
+          <div>
+            <HelpTooltip content="value">
+              <label className="block text-xs font-medium text-slate-400 mb-1">Switch Value</label>
+            </HelpTooltip>
+            <input
+              type="text"
+              value={el.value}
+              onChange={(e) => update('value', e.target.value)}
+              className="input-field text-sm font-mono"
+              placeholder="${data.user_type}"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic expression to match against cases
+            </p>
+          </div>
+          
+          <div>
+            <HelpTooltip content="visible">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={el.visible !== false}
+                  onChange={(e) => update('visible', e.target.checked)}
+                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+                />
+                Visible
+              </label>
+            </HelpTooltip>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
+          </div>
+          
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-medium text-slate-400">Cases</label>
+              <button 
+                onClick={() => {
+                  const newCases = [...(el.cases || []), { 
+                    case: 'new_case', 
+                    elements: [{
+                      id: `case_${Date.now()}`,
+                      type: 'TextBody',
+                      text: 'New case content',
+                      fontWeight: 'normal',
+                      strikethrough: false,
+                      visible: true,
+                      markdown: false
+                    }]
+                  }]
+                  update('cases', newCases)
+                }}
+                className="text-xs text-whatsapp-500 hover:text-whatsapp-400 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add Case
+              </button>
+            </div>
+            <div className="space-y-2">
+              {(el.cases || []).map((caseItem: any, idx: number) => (
+                <div key={idx} className="border border-slate-600 rounded p-2 space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={caseItem.case}
+                      onChange={(e) => {
+                        const newCases = [...(el.cases || [])]
+                        newCases[idx] = { ...caseItem, case: e.target.value }
+                        update('cases', newCases)
+                      }}
+                      className="input-field flex-1 text-xs"
+                      placeholder="case_value"
+                    />
+                    <button
+                      onClick={() => {
+                        const newCases = (el.cases || []).filter((_: any, i: number) => i !== idx)
+                        update('cases', newCases)
+                      }}
+                      className="text-red-500 hover:text-red-400 p-1"
+                      aria-label="Remove case"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Elements: {caseItem.elements?.length || 0}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Each case value will be matched against the switch value
+            </p>
+          </div>
+          
+          <div className="border-t border-slate-600 pt-3">
+            <p className="text-xs text-slate-400 mb-2">
+              Configure case content and default by editing the nested elements in the preview
+            </p>
+            <div className="text-xs text-slate-500">
+              Default: {el.default?.length || 0} element(s)
+            </div>
+          </div>
+        </div>
       )
 
     default:

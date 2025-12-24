@@ -1,5 +1,30 @@
 import type { Screen, AnyElement } from '../types'
 
+// Flow JSON 7.3 version-specific features and validation
+const FLOW_JSON_VERSION = '7.3'
+const DATA_API_VERSION = '4.0'
+
+// Facebook Flow JSON 7.3 specifications
+const FLOW_LIMITS = {
+  MAX_SCREENS: 20,
+  MAX_COMPONENTS_PER_SCREEN: 50,
+  MAX_FORM_COMPONENTS_PER_SCREEN: 20,
+  MAX_TEXT_LENGTH: {
+    TextHeading: 80,
+    TextSubheading: 80,
+    TextBody: 4096,
+    TextCaption: 400,
+    RichText: 4096
+  },
+  MAX_INPUT_LENGTH: {
+    TextInput: 128,
+    TextArea: 4096,
+    label: 40,
+    helperText: 80,
+    description: 300
+  }
+}
+
 export function buildFlowJson(screens: Screen[]) {
   console.log('🔨 buildFlowJson called with screens:', JSON.stringify(screens, null, 2))
   
@@ -7,13 +32,18 @@ export function buildFlowJson(screens: Screen[]) {
   if (!screens || screens.length === 0) {
     console.warn('⚠️ No screens provided to buildFlowJson')
     return {
-      version: '7.3',
+      version: FLOW_JSON_VERSION,
+      data_api_version: DATA_API_VERSION,
       screens: []
     }
   }
 
+  // Validate Flow JSON 7.3 limits
+  validateFlowLimits(screens)
+
   const flowJson: any = {
-    version: '7.3'
+    version: FLOW_JSON_VERSION,
+    data_api_version: DATA_API_VERSION
   }
   
   // Build routing model if there are multiple screens
@@ -49,8 +79,218 @@ export function buildFlowJson(screens: Screen[]) {
     return buildScreen(screen, index, screens)
   })
   
+  // Add global data model schema for dynamic components
+  const globalDataModel = generateGlobalDataModel(screens)
+  if (Object.keys(globalDataModel).length > 0) {
+    flowJson.data = globalDataModel
+  }
+  
+  // Validate the final JSON against Flow JSON 7.3 specifications
+  validateFlowJson(flowJson)
+  
   console.log('✅ Final JSON built:', JSON.stringify(flowJson, null, 2))
   return flowJson
+}
+
+function validateFlowJson(flowJson: any): void {
+  // Validate required top-level properties
+  if (!flowJson.version) {
+    console.error('❌ Missing required property: version')
+  }
+  
+  if (!flowJson.data_api_version) {
+    console.error('❌ Missing required property: data_api_version')
+  }
+  
+  if (!flowJson.screens || !Array.isArray(flowJson.screens)) {
+    console.error('❌ Missing or invalid screens array')
+    return
+  }
+  
+  // Validate each screen
+  flowJson.screens.forEach((screen: any, index: number) => {
+    if (!screen.id) {
+      console.error(`❌ Screen ${index}: Missing required property 'id'`)
+    }
+    
+    if (!screen.title) {
+      console.error(`❌ Screen ${screen.id}: Missing required property 'title'`)
+    }
+    
+    if (!screen.layout || !screen.layout.type) {
+      console.error(`❌ Screen ${screen.id}: Missing or invalid layout`)
+    }
+    
+    if (!screen.layout.children || !Array.isArray(screen.layout.children)) {
+      console.error(`❌ Screen ${screen.id}: Missing or invalid layout children`)
+    }
+    
+    // Validate terminal screens
+    if (screen.terminal && typeof screen.success !== 'boolean') {
+      console.error(`❌ Screen ${screen.id}: Terminal screen missing success property`)
+    }
+  })
+  
+  console.log('✅ Flow JSON validation completed')
+}
+
+function validateFlowLimits(screens: Screen[]) {
+  // Validate screen count
+  if (screens.length > FLOW_LIMITS.MAX_SCREENS) {
+    console.warn(`⚠️ Flow exceeds maximum screens: ${screens.length}/${FLOW_LIMITS.MAX_SCREENS}`)
+  }
+
+  screens.forEach((screen, index) => {
+    // Validate component count per screen
+    if (screen.elements.length > FLOW_LIMITS.MAX_COMPONENTS_PER_SCREEN) {
+      console.warn(`⚠️ Screen ${screen.id} exceeds maximum components: ${screen.elements.length}/${FLOW_LIMITS.MAX_COMPONENTS_PER_SCREEN}`)
+    }
+
+    // Validate form component count
+    const formComponents = screen.elements.filter(el => isFormElement({ type: el.type }))
+    if (formComponents.length > FLOW_LIMITS.MAX_FORM_COMPONENTS_PER_SCREEN) {
+      console.warn(`⚠️ Screen ${screen.id} exceeds maximum form components: ${formComponents.length}/${FLOW_LIMITS.MAX_FORM_COMPONENTS_PER_SCREEN}`)
+    }
+
+    // Validate text length limits
+    screen.elements.forEach(el => {
+      if ('text' in el && el.text && typeof el.text === 'string') {
+        const limit = FLOW_LIMITS.MAX_TEXT_LENGTH[el.type as keyof typeof FLOW_LIMITS.MAX_TEXT_LENGTH]
+        if (limit && el.text.length > limit) {
+          console.warn(`⚠️ ${el.type} text exceeds limit: ${el.text.length}/${limit} chars`)
+        }
+      }
+    })
+  })
+}
+
+function generateGlobalDataModel(screens: Screen[]): Record<string, any> {
+  const dataModel: Record<string, any> = {}
+  
+  screens.forEach((screen, screenIndex) => {
+    screen.elements.forEach(el => {
+      // Add form field data models
+      if ('name' in el && el.name) {
+        const fieldSchema = generateFieldSchema(el)
+        if (fieldSchema) {
+          dataModel[el.name] = fieldSchema
+        }
+      }
+      
+      // Add conditional component data models
+      if (el.type === 'If' && 'condition' in el) {
+        const conditionVars = extractDataVariables(el.condition)
+        conditionVars.forEach(varName => {
+          if (!dataModel[varName]) {
+            dataModel[varName] = {
+              type: 'boolean',
+              __example__: true,
+              __description__: `Condition variable for If component`
+            }
+          }
+        })
+      }
+      
+      if (el.type === 'Switch' && 'value' in el) {
+        const switchVars = extractDataVariables(el.value)
+        switchVars.forEach(varName => {
+          if (!dataModel[varName]) {
+            dataModel[varName] = {
+              type: 'string',
+              __example__: 'default_value',
+              __description__: `Switch value variable`
+            }
+          }
+        })
+      }
+    })
+  })
+  
+  return dataModel
+}
+
+function generateFieldSchema(el: AnyElement): any {
+  const baseSchema = {
+    __example__: getExampleValue(el.type),
+    __description__: `Data from ${el.type} component`
+  }
+
+  switch (el.type) {
+    case 'TextInput':
+    case 'EmailInput':
+    case 'PasswordInput':
+    case 'PhoneInput':
+    case 'TextArea':
+      return {
+        type: 'string',
+        ...baseSchema,
+        ...(('maxChars' in el && el.maxChars) && { maxLength: el.maxChars }),
+        ...(('minChars' in el && el.minChars) && { minLength: el.minChars })
+      }
+    
+    case 'CheckboxGroup':
+    case 'ChipsSelector':
+      return {
+        type: 'array',
+        items: { type: 'string' },
+        ...baseSchema,
+        __example__: ['option_1', 'option_2']
+      }
+    
+    case 'RadioButtonsGroup':
+    case 'Dropdown':
+      return {
+        type: 'string',
+        ...baseSchema
+      }
+    
+    case 'OptIn':
+      return {
+        type: 'boolean',
+        ...baseSchema,
+        __example__: true
+      }
+    
+    case 'DatePicker':
+    case 'CalendarPicker':
+      return {
+        type: 'string',
+        format: 'date',
+        pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+        ...baseSchema,
+        __example__: '2024-01-01'
+      }
+    
+    case 'PhotoPicker':
+    case 'DocumentPicker':
+      return {
+        type: 'array',
+        items: { type: 'string' },
+        ...baseSchema,
+        __example__: ['media_id_1'],
+        __description__: `Media IDs from ${el.type} component`
+      }
+    
+    default:
+      return {
+        type: 'string',
+        ...baseSchema
+      }
+  }
+}
+
+function extractDataVariables(expression: string): string[] {
+  const regex = /\$\{data\.([a-zA-Z_][a-zA-Z0-9_]*)\}/g
+  const variables: string[] = []
+  let match
+  
+  while ((match = regex.exec(expression)) !== null) {
+    if (!variables.includes(match[1])) {
+      variables.push(match[1])
+    }
+  }
+  
+  return variables
 }
 
 function buildScreen(s: Screen, si: number, all: Screen[]) {
@@ -108,22 +348,51 @@ function buildScreen(s: Screen, si: number, all: Screen[]) {
     console.log(`   ✓ Terminal screen: ${s.id}`)
   }
 
-  // Add data schema from previous screens for navigation
+  // Add enhanced data schema from previous screens for navigation
   if (si > 0 && (!footer || footer.action !== 'complete')) {
     const dataSchema: Record<string, any> = {}
     
-    // Collect all form fields from previous screens
+    // Collect all form fields from previous screens with enhanced schema
     for (let i = 0; i < si; i++) {
       const prevScreen = all[i]
       prevScreen.elements.forEach(el => {
         if ('name' in el && el.name) {
-          dataSchema[el.name] = {
-            type: 'string',
-            __example__: getExampleValue(el.type)
+          const fieldSchema = generateFieldSchema(el)
+          if (fieldSchema) {
+            dataSchema[el.name] = fieldSchema
           }
         }
       })
     }
+    
+    // Add current screen's conditional data requirements
+    s.elements.forEach(el => {
+      if (el.type === 'If' && 'condition' in el) {
+        const conditionVars = extractDataVariables(el.condition)
+        conditionVars.forEach(varName => {
+          if (!dataSchema[varName]) {
+            dataSchema[varName] = {
+              type: 'boolean',
+              __example__: true,
+              __description__: `Condition variable for If component`
+            }
+          }
+        })
+      }
+      
+      if (el.type === 'Switch' && 'value' in el) {
+        const switchVars = extractDataVariables(el.value)
+        switchVars.forEach(varName => {
+          if (!dataSchema[varName]) {
+            dataSchema[varName] = {
+              type: 'string',
+              __example__: 'default_value',
+              __description__: `Switch value variable`
+            }
+          }
+        })
+      }
+    })
     
     if (Object.keys(dataSchema).length > 0) {
       screen.data = dataSchema
@@ -134,28 +403,33 @@ function buildScreen(s: Screen, si: number, all: Screen[]) {
   return screen
 }
 
-function getExampleValue(elementType: string): string {
+function getExampleValue(elementType: string): any {
   switch (elementType) {
     case 'TextInput':
+      return 'Sample text input'
     case 'EmailInput':
+      return 'user@example.com'
     case 'PasswordInput':
+      return 'SecurePass123'
     case 'PhoneInput':
+      return '+1234567890'
     case 'TextArea':
-      return 'Sample text'
+      return 'Multi-line text content'
     case 'CheckboxGroup':
-    case 'RadioButtonsGroup':
     case 'ChipsSelector':
+      return ['option_1', 'option_2']
+    case 'RadioButtonsGroup':
     case 'Dropdown':
       return 'option_1'
     case 'OptIn':
-      return 'true'
+      return true
     case 'DatePicker':
     case 'CalendarPicker':
       return '2024-01-01'
     case 'PhotoPicker':
-      return '["media_id_1", "media_id_2"]'
+      return ['photo_media_id_1', 'photo_media_id_2']
     case 'DocumentPicker':
-      return '["media_id_1"]'
+      return ['document_media_id_1']
     default:
       return 'Sample value'
   }
@@ -183,8 +457,40 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       if (el.markdown) result.markdown = el.markdown
       return result
     }
-    case 'RichText':
-      return { type: 'RichText', text: el.text, ...(el.visible !== undefined && { visible: el.visible }) }
+    case 'RichText': {
+      const result: any = { type: 'RichText', text: el.text }
+      if (el.visible !== undefined) result.visible = el.visible
+      // Flow JSON 7.3 feature: RichText supports markdown by default
+      result.markdown = true
+      return result
+    }
+    case 'If': {
+      const result: any = { 
+        type: 'If', 
+        condition: el.condition,
+        then: el.then.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+      }
+      if (el.else && el.else.length > 0) {
+        result.else = el.else.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+      }
+      if (el.visible !== undefined) result.visible = el.visible
+      return result
+    }
+    case 'Switch': {
+      const result: any = { 
+        type: 'Switch', 
+        value: el.value,
+        cases: el.cases.map(caseItem => ({
+          case: caseItem.case,
+          elements: caseItem.elements.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+        }))
+      }
+      if (el.default && el.default.length > 0) {
+        result.default = el.default.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+      }
+      if (el.visible !== undefined) result.visible = el.visible
+      return result
+    }
     case 'TextInput': {
       const result: any = { 
         type: 'TextInput',

@@ -8,6 +8,7 @@ export type ElementType =
   | 'Image' | 'ImageCarousel' | 'PhotoPicker' | 'DocumentPicker'
   | 'NavigationList'
   | 'Footer'
+  | 'If' | 'Switch'
 
 export type BaseElement = {
   id: string
@@ -47,6 +48,25 @@ export type TextCaptionEl = BaseElement & {
 export type RichTextEl = BaseElement & {
   type: 'RichText'
   text: string
+  visible?: boolean
+}
+
+export type IfEl = BaseElement & {
+  type: 'If'
+  condition: string
+  then: AnyElement[]
+  else?: AnyElement[]
+  visible?: boolean
+}
+
+export type SwitchEl = BaseElement & {
+  type: 'Switch'
+  value: string
+  cases: {
+    case: string
+    elements: AnyElement[]
+  }[]
+  default?: AnyElement[]
   visible?: boolean
 }
 
@@ -289,7 +309,7 @@ export type AnyElement =
   | DropdownEl | OptInEl | EmbeddedLinkEl
   | DatePickerEl | CalendarPickerEl
   | ImageEl | ImageCarouselEl | PhotoPickerEl | DocumentPickerEl | NavigationListEl
-  | FooterEl
+  | FooterEl | IfEl | SwitchEl
 
 export type Screen = {
   id: string

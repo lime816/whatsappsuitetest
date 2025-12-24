@@ -2,11 +2,12 @@ import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Smartphone, Trash2, Copy, Edit3 } from 'lucide-react'
+import { Smartphone, Trash2, Copy, Edit3, AlertTriangle, AlertCircle, Info } from 'lucide-react'
 import { useFlowStore } from '../state/store'
 import { SortableItem } from './SortableItem'
 import PropertyEditorInline from './PropertyEditorInline'
 import ConfirmDialog from './ConfirmDialog'
+import { validateComponent, validateScreen, type ComponentValidation } from '../utils/componentValidation'
 import type { AnyElement } from '../types'
 
 export default function Canvas() {
@@ -15,6 +16,10 @@ export default function Canvas() {
   const [selectedElement, setSelectedElement] = useState<AnyElement | null>(null)
   const [deletingElement, setDeletingElement] = useState<AnyElement | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [showValidationTooltip, setShowValidationTooltip] = useState<string | null>(null)
+
+  // Validate current screen
+  const screenValidation = screen ? validateScreen(screen) : null
 
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -57,6 +62,8 @@ export default function Canvas() {
       case 'TextBody': return 'Body Text'
       case 'TextCaption': return 'Caption'
       case 'RichText': return 'Rich Text'
+      case 'If': return 'If Condition'
+      case 'Switch': return 'Switch'
       case 'TextInput': return 'Text Input'
       case 'EmailInput': return 'Email Input'
       case 'PasswordInput': return 'Password Input'
@@ -136,6 +143,57 @@ export default function Canvas() {
           <Smartphone className="w-4 h-4" />
           <span className="hypr-section-title">{screen.title}</span>
           <span className="hypr-badge">{screen.elements.length}</span>
+          
+          {/* Validation Indicators */}
+          {screenValidation && (
+            <div className="flex items-center gap-1 ml-2">
+              {screenValidation.errors.length > 0 && (
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowValidationTooltip('screen-errors')}
+                  onMouseLeave={() => setShowValidationTooltip(null)}
+                >
+                  <AlertCircle className="w-4 h-4 text-red-400" />
+                  {showValidationTooltip === 'screen-errors' && (
+                    <div className="absolute top-6 left-0 z-50 bg-red-900 border border-red-700 rounded p-2 text-xs text-white whitespace-nowrap shadow-lg">
+                      <div className="font-semibold mb-1">{screenValidation.errors.length} Error(s):</div>
+                      {screenValidation.errors.slice(0, 3).map((error, idx) => (
+                        <div key={idx} className="text-red-200">• {error.message}</div>
+                      ))}
+                      {screenValidation.errors.length > 3 && (
+                        <div className="text-red-300">...and {screenValidation.errors.length - 3} more</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {screenValidation.warnings.length > 0 && (
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowValidationTooltip('screen-warnings')}
+                  onMouseLeave={() => setShowValidationTooltip(null)}
+                >
+                  <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                  {showValidationTooltip === 'screen-warnings' && (
+                    <div className="absolute top-6 left-0 z-50 bg-yellow-900 border border-yellow-700 rounded p-2 text-xs text-white whitespace-nowrap shadow-lg">
+                      <div className="font-semibold mb-1">{screenValidation.warnings.length} Warning(s):</div>
+                      {screenValidation.warnings.slice(0, 3).map((warning, idx) => (
+                        <div key={idx} className="text-yellow-200">• {warning.message}</div>
+                      ))}
+                      {screenValidation.warnings.length > 3 && (
+                        <div className="text-yellow-300">...and {screenValidation.warnings.length - 3} more</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {screenValidation.isValid && (
+                <Info className="w-4 h-4 text-green-400" title="All validations passed" />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -176,6 +234,9 @@ export default function Canvas() {
                               el={el} 
                               onClick={() => setSelectedElement(el)}
                               isSelected={selectedElement?.id === el.id}
+                              validation={validateComponent(el)}
+                              onValidationTooltip={setShowValidationTooltip}
+                              showValidationTooltip={showValidationTooltip}
                             />
                           </div>
                           
@@ -268,39 +329,129 @@ export default function Canvas() {
   )
 }
 
-function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; isSelected?: boolean }) {
+function Preview({ 
+  el, 
+  onClick, 
+  isSelected, 
+  validation, 
+  onValidationTooltip, 
+  showValidationTooltip 
+}: { 
+  el: any; 
+  onClick: () => void; 
+  isSelected?: boolean;
+  validation: ComponentValidation;
+  onValidationTooltip: (id: string | null) => void;
+  showValidationTooltip: string | null;
+}) {
+  const hasErrors = validation.errors.length > 0
+  const hasWarnings = validation.warnings.length > 0
+  const isHidden = el.visible === false
+  
   const baseClass = `hypr-component-preview ${
     isSelected ? 'hypr-component-preview-selected' : ''
+  } ${hasErrors ? 'border-red-500 bg-red-900/10' : hasWarnings ? 'border-yellow-500 bg-yellow-900/10' : ''} ${
+    isHidden ? 'opacity-50 border-dashed' : ''
   }`
+
+  const renderValidationIndicators = () => (
+    <div className="flex items-center gap-1 ml-2">
+      {hasErrors && (
+        <div 
+          className="relative"
+          onMouseEnter={() => onValidationTooltip(`${el.id}-errors`)}
+          onMouseLeave={() => onValidationTooltip(null)}
+        >
+          <AlertCircle className="w-3 h-3 text-red-400" />
+          {showValidationTooltip === `${el.id}-errors` && (
+            <div className="absolute top-4 left-0 z-50 bg-red-900 border border-red-700 rounded p-2 text-xs text-white whitespace-nowrap shadow-lg max-w-xs">
+              <div className="font-semibold mb-1">Errors:</div>
+              {validation.errors.map((error, idx) => (
+                <div key={idx} className="text-red-200">
+                  • {error.message}
+                  {error.limit && error.current && (
+                    <span className="text-red-300"> ({error.current}/{error.limit})</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {hasWarnings && (
+        <div 
+          className="relative"
+          onMouseEnter={() => onValidationTooltip(`${el.id}-warnings`)}
+          onMouseLeave={() => onValidationTooltip(null)}
+        >
+          <AlertTriangle className="w-3 h-3 text-yellow-400" />
+          {showValidationTooltip === `${el.id}-warnings` && (
+            <div className="absolute top-4 left-0 z-50 bg-yellow-900 border border-yellow-700 rounded p-2 text-xs text-white whitespace-nowrap shadow-lg max-w-xs">
+              <div className="font-semibold mb-1">Warnings:</div>
+              {validation.warnings.map((warning, idx) => (
+                <div key={idx} className="text-yellow-200">
+                  • {warning.message}
+                  {warning.limit && warning.current && (
+                    <span className="text-yellow-300"> ({warning.current}/{warning.limit})</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+
+  const renderCharacterCount = (text: string, limit: number) => {
+    const isOverLimit = text.length > limit
+    const isNearLimit = text.length > limit * 0.9
+    
+    return (
+      <div className={`text-xs mt-1 ${
+        isOverLimit ? 'text-red-400' : isNearLimit ? 'text-yellow-400' : 'text-slate-500'
+      }`}>
+        {text.length}/{limit} chars
+        {isOverLimit && <span className="ml-1 font-semibold">OVER LIMIT</span>}
+        {isNearLimit && !isOverLimit && <span className="ml-1">NEAR LIMIT</span>}
+      </div>
+    )
+  }
   
   switch (el.type) {
     case 'TextHeading':
       return (
-        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
-          <div className="hypr-component-type">
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
             HEADING
-            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {isHidden && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {renderValidationIndicators()}
           </div>
           <h1 className="text-lg font-bold text-slate-200">{el.text}</h1>
+          {el.text && renderCharacterCount(el.text, 80)}
         </div>
       )
     case 'TextSubheading':
       return (
-        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
-          <div className="hypr-component-type">
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
             SUBHEADING
-            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {isHidden && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {renderValidationIndicators()}
           </div>
           <h2 className="text-base font-semibold text-slate-200">{el.text}</h2>
+          {el.text && renderCharacterCount(el.text, 80)}
         </div>
       )
     case 'TextBody':
       return (
-        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
-          <div className="hypr-component-type">
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
             BODY
-            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {isHidden && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
             {el.markdown && <span className="ml-2 text-xs text-blue-400">(MD)</span>}
+            {renderValidationIndicators()}
           </div>
           <p className={`text-sm text-gray-300 ${
             el.fontWeight === 'bold' ? 'font-bold' : 
@@ -309,16 +460,17 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
           } ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
+          {el.text && renderCharacterCount(el.text, 4096)}
         </div>
       )
     case 'TextCaption':
       return (
-        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
-          <div className="hypr-component-type">
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
             CAPTION
-            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {isHidden && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
             {el.markdown && <span className="ml-2 text-xs text-blue-400">(MD)</span>}
-            {el.text && el.text.length > 400 && <span className="ml-2 text-xs text-red-400">(400+ CHARS)</span>}
+            {renderValidationIndicators()}
           </div>
           <p className={`text-xs text-gray-400 ${
             el.fontWeight === 'bold' ? 'font-bold' : 
@@ -327,26 +479,71 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
           } ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
-          {el.text && el.text.length > 0 && (
-            <div className="text-xs text-slate-500 mt-1">
-              {el.text.length}/400 chars
-            </div>
-          )}
+          {el.text && renderCharacterCount(el.text, 400)}
         </div>
       )
     case 'RichText':
       return (
         <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">RICHTEXT</div>
+          <div className="hypr-component-type flex items-center">
+            RICHTEXT
+            {renderValidationIndicators()}
+          </div>
           <div className="text-gray-300 text-sm">
             <pre className="whitespace-pre-wrap text-xs">{el.text}</pre>
+          </div>
+          {el.text && renderCharacterCount(el.text, 4096)}
+        </div>
+      )
+    case 'If':
+      return (
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
+            IF CONDITION
+            {renderValidationIndicators()}
+          </div>
+          <div className="text-gray-300 text-sm">
+            <div className="text-xs text-blue-400 mb-1">Condition: {el.condition}</div>
+            <div className="border-l-2 border-green-500 pl-2 mb-2">
+              <div className="text-xs text-green-400">THEN ({el.then?.length || 0} elements)</div>
+            </div>
+            {el.else && el.else.length > 0 && (
+              <div className="border-l-2 border-red-500 pl-2">
+                <div className="text-xs text-red-400">ELSE ({el.else.length} elements)</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    case 'Switch':
+      return (
+        <div onClick={onClick} className={baseClass}>
+          <div className="hypr-component-type flex items-center">
+            SWITCH
+            {renderValidationIndicators()}
+          </div>
+          <div className="text-gray-300 text-sm">
+            <div className="text-xs text-blue-400 mb-1">Value: {el.value}</div>
+            {el.cases?.map((caseItem, idx) => (
+              <div key={idx} className="border-l-2 border-yellow-500 pl-2 mb-1">
+                <div className="text-xs text-yellow-400">CASE "{caseItem.case}" ({caseItem.elements?.length || 0} elements)</div>
+              </div>
+            ))}
+            {el.default && el.default.length > 0 && (
+              <div className="border-l-2 border-gray-500 pl-2">
+                <div className="text-xs text-gray-400">DEFAULT ({el.default.length} elements)</div>
+              </div>
+            )}
           </div>
         </div>
       )
     case 'TextInput':
       return (
         <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">INPUT</div>
+          <div className="hypr-component-type flex items-center">
+            INPUT
+            {renderValidationIndicators()}
+          </div>
           <label className="text-xs text-gray-400 block mb-1">{el.label}</label>
           <div className="hypr-input-preview">
             <span className="text-gray-500 text-xs">
@@ -359,6 +556,7 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
           {el.helperText && (
             <p className="text-xs text-gray-500 mt-1">{el.helperText}</p>
           )}
+          {el.label && renderCharacterCount(el.label, 40)}
         </div>
       )
     case 'EmailInput':
