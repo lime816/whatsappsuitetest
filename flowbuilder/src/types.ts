@@ -60,6 +60,9 @@ export type TextInputEl = BaseElement & {
   helperText?: string
   minChars?: number
   maxChars?: number
+  labelVariant?: 'standard' | 'floating' | 'stacked'
+  initValue?: string
+  errorMessage?: string | Record<string, string>
 }
 
 export type EmailInputEl = BaseElement & {
@@ -103,6 +106,10 @@ export type TextAreaEl = BaseElement & {
   required?: boolean
   maxLength?: number
   helperText?: string
+  labelVariant?: 'standard' | 'floating' | 'stacked'
+  enabled?: boolean
+  initValue?: string
+  errorMessage?: string | Record<string, string>
 }
 
 export type DropdownEl = BaseElement & {
@@ -119,6 +126,10 @@ export type FooterEl = BaseElement & {
   action: 'navigate' | 'complete'
   nextScreen?: string
   payloadKeys: string[] // keys from current + previous screens
+  leftCaption?: string
+  centerCaption?: string
+  rightCaption?: string
+  enabled?: boolean
 }
 
 export type CheckboxGroupEl = BaseElement & {
@@ -132,6 +143,9 @@ export type CheckboxGroupEl = BaseElement & {
   enabled?: boolean
   visible?: boolean
   description?: string
+  onSelectAction?: string
+  onUnselectAction?: string
+  mediaSize?: 'small' | 'medium' | 'large'
 }
 
 export type OptInEl = BaseElement & {
@@ -199,6 +213,9 @@ export type ChipsSelectorEl = BaseElement & {
   enabled?: boolean
   visible?: boolean
   description?: string
+  onSelectAction?: string
+  onUnselectAction?: string
+  mediaSize?: 'small' | 'medium' | 'large'
 }
 
 export type NavigationListEl = BaseElement & {

@@ -365,6 +365,50 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               className="input-field text-sm"
               placeholder="E.g. Enter your phone number"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.helper_text}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Label Variant</label>
+            <select
+              value={el.labelVariant || 'standard'}
+              onChange={(e) => update('labelVariant', e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="standard">Standard</option>
+              <option value="floating">Floating</option>
+              <option value="stacked">Stacked</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.label_variant}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Initial Value</label>
+            <input
+              type="text"
+              value={el.initValue || ''}
+              onChange={(e) => update('initValue', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Default value"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.init_value}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Error Message</label>
+            <input
+              type="text"
+              value={typeof el.errorMessage === 'string' ? el.errorMessage : ''}
+              onChange={(e) => update('errorMessage', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Custom error message"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.error_message}'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -580,6 +624,80 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               placeholder="No limit"
             />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+            <input
+              type="text"
+              value={el.description || ''}
+              onChange={(e) => update('description', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Additional description"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.description}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">On Select Action</label>
+            <input
+              type="text"
+              value={el.onSelectAction || ''}
+              onChange={(e) => update('onSelectAction', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Action when item selected"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.on_select_action}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">On Unselect Action</label>
+            <input
+              type="text"
+              value={el.onUnselectAction || ''}
+              onChange={(e) => update('onUnselectAction', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Action when item unselected"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.on_unselect_action}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Media Size</label>
+            <select
+              value={el.mediaSize || 'medium'}
+              onChange={(e) => update('mediaSize', e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.media_size}'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`enabled-checkbox-${el.id}`}
+              checked={el.enabled !== false}
+              onChange={(e) => update('enabled', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`enabled-checkbox-${el.id}`} className="text-xs text-slate-300">Enabled</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`visible-checkbox-${el.id}`}
+              checked={el.visible !== false}
+              onChange={(e) => update('visible', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`visible-checkbox-${el.id}`} className="text-xs text-slate-300">Visible</label>
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -639,6 +757,80 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               className="input-field text-sm"
               placeholder="No limit"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+            <input
+              type="text"
+              value={el.description || ''}
+              onChange={(e) => update('description', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Additional description"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.description}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">On Select Action</label>
+            <input
+              type="text"
+              value={el.onSelectAction || ''}
+              onChange={(e) => update('onSelectAction', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Action when item selected"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.on_select_action}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">On Unselect Action</label>
+            <input
+              type="text"
+              value={el.onUnselectAction || ''}
+              onChange={(e) => update('onUnselectAction', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Action when item unselected"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.on_unselect_action}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Media Size</label>
+            <select
+              value={el.mediaSize || 'medium'}
+              onChange={(e) => update('mediaSize', e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.media_size}'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`enabled-chips-${el.id}`}
+              checked={el.enabled !== false}
+              onChange={(e) => update('enabled', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`enabled-chips-${el.id}`} className="text-xs text-slate-300">Enabled</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`visible-chips-${el.id}`}
+              checked={el.visible !== false}
+              onChange={(e) => update('visible', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`visible-chips-${el.id}`} className="text-xs text-slate-300">Visible</label>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -1302,6 +1494,83 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               className="input-field text-sm"
             />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Max Length</label>
+            <input
+              type="number"
+              value={el.maxLength || ''}
+              onChange={(e) => update('maxLength', e.target.value ? parseInt(e.target.value) : undefined)}
+              className="input-field text-sm"
+              placeholder="4096"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Character limit for text area
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Helper Text</label>
+            <input
+              type="text"
+              value={el.helperText || ''}
+              onChange={(e) => update('helperText', e.target.value)}
+              className="input-field text-sm"
+              placeholder="E.g. Enter your comments"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.helper_text}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Label Variant</label>
+            <select
+              value={el.labelVariant || 'standard'}
+              onChange={(e) => update('labelVariant', e.target.value)}
+              className="input-field text-sm"
+            >
+              <option value="standard">Standard</option>
+              <option value="floating">Floating</option>
+              <option value="stacked">Stacked</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.label_variant}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Initial Value</label>
+            <input
+              type="text"
+              value={el.initValue || ''}
+              onChange={(e) => update('initValue', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Default text"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.init_value}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Error Message</label>
+            <input
+              type="text"
+              value={typeof el.errorMessage === 'string' ? el.errorMessage : ''}
+              onChange={(e) => update('errorMessage', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Custom error message"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.error_message}'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`enabled-${el.id}`}
+              checked={el.enabled !== false}
+              onChange={(e) => update('enabled', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`enabled-${el.id}`} className="text-xs text-slate-300">Enabled</label>
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -1388,6 +1657,55 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               />
             </div>
           )}
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Left Caption</label>
+            <input
+              type="text"
+              value={el.leftCaption || ''}
+              onChange={(e) => update('leftCaption', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Left side caption"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.left_caption}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Center Caption</label>
+            <input
+              type="text"
+              value={el.centerCaption || ''}
+              onChange={(e) => update('centerCaption', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Center caption"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.center_caption}'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Right Caption</label>
+            <input
+              type="text"
+              value={el.rightCaption || ''}
+              onChange={(e) => update('rightCaption', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Right side caption"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.right_caption}'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`enabled-footer-${el.id}`}
+              checked={el.enabled !== false}
+              onChange={(e) => update('enabled', e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
+            />
+            <label htmlFor={`enabled-footer-${el.id}`} className="text-xs text-slate-300">Enabled</label>
+          </div>
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">
               Payload Keys

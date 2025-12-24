@@ -7,13 +7,13 @@ export function buildFlowJson(screens: Screen[]) {
   if (!screens || screens.length === 0) {
     console.warn('⚠️ No screens provided to buildFlowJson')
     return {
-      version: '7.2',
+      version: '7.3',
       screens: []
     }
   }
 
   const flowJson: any = {
-    version: '7.2'
+    version: '7.3'
   }
   
   // Build routing model if there are multiple screens
@@ -56,15 +56,16 @@ export function buildFlowJson(screens: Screen[]) {
 function buildScreen(s: Screen, si: number, all: Screen[]) {
   console.log(`📄 buildScreen: ${s.id} - "${s.title}"`)
   console.log(`   Elements count: ${s.elements.length}`)
+  console.log(`   Element order: ${s.elements.map((el, idx) => `${idx}:${el.type}(${el.id})`).join(', ')}`)
   
-  // Map all elements
+  // Map all elements - CRITICAL: Maintain exact order from screens array
   const elements = s.elements.map((el, ei) => {
     const mapped = mapElement(el, si, ei, s, all)
-    console.log(`   ✓ Mapped element ${ei}: ${el.type} -> ${mapped.type}`)
+    console.log(`   ✓ Mapped element ${ei}: ${el.type}(${el.id}) -> ${mapped.type}`)
     return mapped
   })
   
-  // Separate form elements from non-form elements
+  // Separate form elements from non-form elements while preserving relative order
   const formElements = elements.filter(el => isFormElement(el))
   const nonFormElements = elements.filter(el => !isFormElement(el))
   
@@ -72,12 +73,13 @@ function buildScreen(s: Screen, si: number, all: Screen[]) {
   
   const children: any[] = []
   
-  // Add non-form elements first
+  // Add non-form elements first (in their original order)
   children.push(...nonFormElements)
   
   // If there are form elements, wrap them in a Form component
   if (formElements.length > 0) {
     // CRITICAL: Footer MUST be the last element in Form children
+    // BUT maintain the relative order of other form elements
     const footerElements = formElements.filter(el => el.type === 'Footer')
     const otherFormElements = formElements.filter(el => el.type !== 'Footer')
     
@@ -195,6 +197,9 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       if (el.helperText) result['helper-text'] = el.helperText
       if (el.minChars) result['min-chars'] = el.minChars
       if (el.maxChars) result['max-chars'] = el.maxChars
+      if (el.labelVariant) result['label-variant'] = el.labelVariant
+      if (el.initValue) result['init-value'] = el.initValue
+      if (el.errorMessage) result['error-message'] = el.errorMessage
       return result
     }
     case 'EmailInput': {
@@ -245,6 +250,9 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       if (el.enabled !== undefined) result.enabled = el.enabled
       if (el.visible !== undefined) result.visible = el.visible
       if (el.description) result.description = el.description
+      if (el.onSelectAction) result['on-select-action'] = el.onSelectAction
+      if (el.onUnselectAction) result['on-unselect-action'] = el.onUnselectAction
+      if (el.mediaSize) result['media-size'] = el.mediaSize
       return result
     }
     case 'RadioButtonsGroup': {
@@ -270,6 +278,9 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       if (el.enabled !== undefined) result.enabled = el.enabled
       if (el.visible !== undefined) result.visible = el.visible
       if (el.description) result.description = el.description
+      if (el.onSelectAction) result['on-select-action'] = el.onSelectAction
+      if (el.onUnselectAction) result['on-unselect-action'] = el.onUnselectAction
+      if (el.mediaSize) result['media-size'] = el.mediaSize
       return result
     }
     case 'TextArea': {
@@ -281,6 +292,10 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       if (el.required !== undefined) result.required = el.required
       if (el.maxLength) result['max-length'] = el.maxLength
       if (el.helperText) result['helper-text'] = el.helperText
+      if (el.labelVariant) result['label-variant'] = el.labelVariant
+      if (el.enabled !== undefined) result.enabled = el.enabled
+      if (el.initValue) result['init-value'] = el.initValue
+      if (el.errorMessage) result['error-message'] = el.errorMessage
       return result
     }
     case 'Dropdown': {
@@ -423,6 +438,12 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
         type: 'Footer',
         label: el.label
       }
+      
+      // Add new Footer properties
+      if (el.leftCaption) result['left-caption'] = el.leftCaption
+      if (el.centerCaption) result['center-caption'] = el.centerCaption
+      if (el.rightCaption) result['right-caption'] = el.rightCaption
+      if (el.enabled !== undefined) result.enabled = el.enabled
       
       if (el.action === 'navigate') {
         const payload: Record<string, string> = {}

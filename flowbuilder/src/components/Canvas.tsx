@@ -10,7 +10,7 @@ import ConfirmDialog from './ConfirmDialog'
 import type { AnyElement } from '../types'
 
 export default function Canvas() {
-  const { screens, selectedScreenId, moveElement, updateElement, removeElement, duplicateElement } = useFlowStore()
+  const { screens, selectedScreenId, moveElement, updateElement, removeElement, duplicateElement, validateComponentOrder, syncVisualOrderWithJSON } = useFlowStore()
   const screen = screens.find(s => s.id === selectedScreenId)
   const [selectedElement, setSelectedElement] = useState<AnyElement | null>(null)
   const [deletingElement, setDeletingElement] = useState<AnyElement | null>(null)
@@ -23,7 +23,15 @@ export default function Canvas() {
     const oldIndex = screen.elements.findIndex(e => e.id === active.id)
     const newIndex = screen.elements.findIndex(e => e.id === over.id)
     if (oldIndex < 0 || newIndex < 0) return
+    
+    // Perform the move
     moveElement(screen.id, oldIndex, newIndex)
+    
+    // Validate and sync order after move
+    setTimeout(() => {
+      validateComponentOrder(screen.id)
+      syncVisualOrderWithJSON(screen.id)
+    }, 0)
   }
 
   const handleDelete = useCallback((el: AnyElement) => {
