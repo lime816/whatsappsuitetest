@@ -46,19 +46,19 @@
   
   /* Tiling window manager buttons */
   .hypr-btn {
-    @apply bg-slate-600 hover:bg-slate-500 text-slate-200 font-mono text-xs px-3 py-1.5 border border-slate-500 transition-colors duration-100 active:bg-slate-400;
+    @apply bg-slate-600 hover:bg-slate-500 text-slate-200 font-mono text-xs px-3 py-1.5 border border-slate-500 transition-colors duration-100 active:bg-slate-400 text-center min-w-[64px];
   }
   
   .hypr-btn-primary {
-    @apply bg-cyan-700 hover:bg-cyan-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-cyan-600 transition-colors duration-100 active:bg-cyan-500;
+    @apply bg-cyan-700 hover:bg-cyan-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-cyan-600 transition-colors duration-100 active:bg-cyan-500 text-center min-w-[64px];
   }
   
   .hypr-btn-danger {
-    @apply bg-rose-700 hover:bg-rose-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-rose-600 transition-colors duration-100 active:bg-rose-500;
+    @apply bg-rose-700 hover:bg-rose-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-rose-600 transition-colors duration-100 active:bg-rose-500 text-center min-w-[64px];
   }
   
   .hypr-btn-success {
-    @apply bg-emerald-700 hover:bg-emerald-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-emerald-600 transition-colors duration-100 active:bg-emerald-500;
+    @apply bg-emerald-700 hover:bg-emerald-600 text-slate-100 font-mono text-xs px-3 py-1.5 border border-emerald-600 transition-colors duration-100 active:bg-emerald-500 text-center min-w-[64px];
   }
   
   /* Input fields - minimal, flat */

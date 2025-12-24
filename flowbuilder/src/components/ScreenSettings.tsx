@@ -162,21 +162,7 @@ export default function ScreenSettings({ flowName, setFlowName, customMessage, s
             </div>
           </div>
 
-          {/* Status Display */}
-          <div className="hypr-status-panel">
-            <div className="hypr-status-row">
-              <span className="hypr-status-label">FLOW:</span>
-              <span className="hypr-status-value">{flowName || 'UNNAMED'}</span>
-            </div>
-            <div className="hypr-status-row">
-              <span className="hypr-status-label">MSG:</span>
-              <span className="hypr-status-value truncate">{customMessage || 'NO_MESSAGE'}</span>
-            </div>
-            <div className="hypr-status-row">
-              <span className="hypr-status-label">COMPONENTS:</span>
-              <span className="hypr-status-value">{screen.elements.length}</span>
-            </div>
-          </div>
+          {/* Status display removed per UI simplification */}
         </div>
       </div>
     </div>
