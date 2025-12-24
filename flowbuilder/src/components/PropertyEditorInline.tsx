@@ -58,33 +58,65 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
   switch (el.type) {
     case 'TextHeading':
       return (
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
-          <input
-            type="text"
-            value={el.text}
-            onChange={(e) => update('text', e.target.value)}
-            className="input-field text-sm"
-            placeholder="Enter heading text"
-          />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
+            <input
+              type="text"
+              value={el.text}
+              onChange={(e) => update('text', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Enter heading text"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={el.visible !== false}
+                onChange={(e) => update('visible', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Visible
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
+          </div>
         </div>
       )
     case 'TextSubheading':
       return (
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
-          <input
-            type="text"
-            value={el.text}
-            onChange={(e) => update('text', e.target.value)}
-            className="input-field text-sm"
-            placeholder="Enter subheading text"
-          />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
+            <input
+              type="text"
+              value={el.text}
+              onChange={(e) => update('text', e.target.value)}
+              className="input-field text-sm"
+              placeholder="Enter subheading text"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={el.visible !== false}
+                onChange={(e) => update('visible', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Visible
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
+          </div>
         </div>
       )
     case 'TextBody':
       return (
-        <>
+        <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
             <textarea
@@ -94,7 +126,11 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               rows={3}
               placeholder="Enter body text"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.text}'}
+            </p>
           </div>
+          
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Font Weight</label>
             <select
@@ -104,43 +140,94 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             >
               <option value="normal">Normal</option>
               <option value="bold">Bold</option>
+              <option value="italic">Italic</option>
+              <option value="bold_italic">Bold Italic</option>
             </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.font_weight}'}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`strikethrough-${el.id}`}
-              checked={!!el.strikethrough}
-              onChange={(e) => update('strikethrough', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
-            />
-            <label htmlFor={`strikethrough-${el.id}`} className="text-xs text-slate-300">Strikethrough</label>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={!!el.strikethrough}
+                onChange={(e) => update('strikethrough', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Strikethrough
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.strikethrough}'}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`markdown-${el.id}`}
-              checked={!!el.markdown}
-              onChange={(e) => update('markdown', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
-            />
-            <label htmlFor={`markdown-${el.id}`} className="text-xs text-slate-300">Enable Markdown</label>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={el.visible !== false}
+                onChange={(e) => update('visible', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Visible
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
           </div>
-        </>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={!!el.markdown}
+                onChange={(e) => update('markdown', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Markdown Support
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Default: False | Requires Flow JSON V5.1+
+            </p>
+          </div>
+        </div>
       )
     case 'TextCaption':
       return (
-        <>
+        <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Text</label>
-            <input
-              type="text"
+            <textarea
               value={el.text}
-              onChange={(e) => update('text', e.target.value)}
-              className="input-field text-sm"
+              onChange={(e) => {
+                const value = e.target.value
+                // Enforce 400 character limit
+                if (value.length <= 400) {
+                  update('text', value)
+                }
+              }}
+              className={`input-field text-sm ${el.text && el.text.length > 400 ? 'border-red-500' : ''}`}
+              rows={2}
               placeholder="Enter caption text"
+              maxLength={400}
             />
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-slate-500">
+                Dynamic: ${'{data.text}'}
+              </p>
+              <p className={`text-xs ${el.text && el.text.length > 380 ? 'text-red-400' : 'text-slate-500'}`}>
+                {el.text ? el.text.length : 0}/400 chars
+              </p>
+            </div>
+            {!el.text && (
+              <p className="text-xs text-red-400 mt-1">
+                Empty or blank value is not accepted
+              </p>
+            )}
           </div>
+          
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Font Weight</label>
             <select
@@ -150,29 +237,59 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             >
               <option value="normal">Normal</option>
               <option value="bold">Bold</option>
+              <option value="italic">Italic</option>
+              <option value="bold_italic">Bold Italic</option>
             </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.font_weight}'}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`strikethrough-${el.id}`}
-              checked={!!el.strikethrough}
-              onChange={(e) => update('strikethrough', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
-            />
-            <label htmlFor={`strikethrough-${el.id}`} className="text-xs text-slate-300">Strikethrough</label>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={!!el.strikethrough}
+                onChange={(e) => update('strikethrough', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Strikethrough
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.strikethrough}'}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`markdown-${el.id}`}
-              checked={!!el.markdown}
-              onChange={(e) => update('markdown', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-whatsapp-500 focus:ring-whatsapp-500"
-            />
-            <label htmlFor={`markdown-${el.id}`} className="text-xs text-slate-300">Enable Markdown</label>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={el.visible !== false}
+                onChange={(e) => update('visible', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Visible
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Dynamic: ${'{data.is_visible}'} | Default: True
+            </p>
           </div>
-        </>
+          
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+              <input
+                type="checkbox"
+                checked={!!el.markdown}
+                onChange={(e) => update('markdown', e.target.checked)}
+                className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+              />
+              Markdown Support
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Default: False | Requires Flow JSON V5.1+
+            </p>
+          </div>
+        </div>
       )
     case 'RichText':
       return (

@@ -5,9 +5,21 @@ const logger = require('../utils/logger');
 
 class DatabaseService {
   constructor() {
+    // Use direct connection for better compatibility
+    const connectionString = process.env.DATABASE_URL;
+    
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is required');
+    }
+    
+    console.log('🔗 Connecting to database:', connectionString.replace(/:[^:@]*@/, ':***@'));
+    
     // Create PostgreSQL connection pool
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL
+      connectionString: connectionString,
+      ssl: {
+        rejectUnauthorized: false // Required for Supabase
+      }
     });
     
     // Create Prisma adapter

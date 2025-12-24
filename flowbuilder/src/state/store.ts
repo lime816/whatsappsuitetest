@@ -13,6 +13,9 @@ export type FlowState = {
   updateElement: (screenId: string, el: AnyElement) => void
   removeElement: (screenId: string, elementId: string) => void
   moveElement: (screenId: string, from: number, to: number) => void
+  duplicateElement: (screenId: string, elementId: string) => void
+  loadScreens: (screens: Screen[]) => void
+  clearScreens: () => void
 }
 
 const createFeedbackScreen = (): Screen => ({
@@ -70,12 +73,17 @@ const createNewScreen = (screenNumber: number): Screen => {
       {
         id: nanoid(6),
         type: 'TextHeading',
-        text: `${screenName.charAt(0) + screenName.slice(1).toLowerCase()} Screen Title`
+        text: `${screenName.charAt(0) + screenName.slice(1).toLowerCase()} Screen Title`,
+        visible: true
       },
       {
         id: nanoid(6),
         type: 'TextBody',
-        text: 'Add your content here...'
+        text: 'Add your content here...',
+        fontWeight: 'normal',
+        strikethrough: false,
+        visible: true,
+        markdown: false
       },
       {
         id: nanoid(6),
@@ -100,12 +108,14 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       {
         id: 'forced1',
         type: 'TextSubheading',
-        text: 'Would you recommend us to a friend?'
+        text: 'Would you recommend us to a friend?',
+        visible: true
       },
       {
         id: 'forced2', 
         type: 'TextSubheading',
-        text: 'How could we do better?'
+        text: 'How could we do better?',
+        visible: true
       },
       {
         id: 'forced3',
@@ -199,19 +209,68 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       return { ...sc, elements: arr }
     })
   })),
+
+  duplicateElement: (screenId, elementId) => set(s => ({
+    screens: s.screens.map(sc => {
+      if (sc.id !== screenId) return sc
+      
+      const elementIndex = sc.elements.findIndex(e => e.id === elementId)
+      if (elementIndex === -1) return sc
+      
+      const originalElement = sc.elements[elementIndex]
+      const duplicatedElement = {
+        ...originalElement,
+        id: nanoid(6),
+        // Update name/label if it exists to indicate it's a copy
+        ...(originalElement.name && { name: `${originalElement.name} (Copy)` }),
+        ...(originalElement.label && { label: `${originalElement.label} (Copy)` })
+      }
+      
+      const newElements = [...sc.elements]
+      newElements.splice(elementIndex + 1, 0, duplicatedElement)
+      
+      return { ...sc, elements: newElements }
+    })
+  })),
+
+  loadScreens: (screens) => set({
+    screens: screens,
+    selectedScreenId: screens.length > 0 ? screens[0].id : undefined
+  }),
+
+  clearScreens: () => set({
+    screens: [],
+    selectedScreenId: undefined
+  }),
 }))
 
 function createDefaultElement(type: ElementType): AnyElement {
   const id = nanoid(6)
   switch (type) {
     case 'TextHeading':
-      return { id, type, text: 'Text Heading' }
+      return { id, type, text: 'Text Heading', visible: true }
     case 'TextSubheading':
-      return { id, type, text: 'Text subheading' }
+      return { id, type, text: 'Text subheading', visible: true }
     case 'TextBody':
-      return { id, type, text: 'Body text content goes here' }
+      return { 
+        id, 
+        type, 
+        text: 'Body text content goes here',
+        fontWeight: 'normal',
+        strikethrough: false,
+        visible: true,
+        markdown: false
+      }
     case 'TextCaption':
-      return { id, type, text: 'Caption text' }
+      return { 
+        id, 
+        type, 
+        text: 'Caption text',
+        fontWeight: 'normal',
+        strikethrough: false,
+        visible: true,
+        markdown: false
+      }
     case 'RichText':
       return { id, type, text: '# Rich Text\n\nThis is **bold** and *italic* text.' }
     case 'TextInput':

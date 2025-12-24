@@ -7,12 +7,13 @@ import FlowPreviewPane from './FlowPreviewPane'
 import QRFlowInitiator from './QRFlowInitiator'
 import WebhookSetup from './WebhookSetup'
 import MessageLibrary from './MessageLibrary'
+import Analytics from './Analytics'
 import { useFlowStore } from '../state/store'
 import { useMessageLibraryStore } from '../state/messageLibraryStore'
 import { buildFlowJson } from '../utils/jsonBuilder'
 import { AppState } from '../state/appState'
 import { FlowService } from '../utils/flowService'
-import { QrCode, Globe } from 'lucide-react'
+import { QrCode, Globe, BarChart3 } from 'lucide-react'
 
 interface AppModalsProps {
   state: AppState
@@ -116,6 +117,15 @@ export default function AppModals({ state, flowService, onSetPanel, onSetPreview
         {panels.showMessageLibrary && (
           <MessageLibrary 
             onClose={() => onSetPanel('showMessageLibrary', false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Analytics Panel */}
+      <AnimatePresence>
+        {panels.showAnalytics && (
+          <Analytics 
+            onClose={() => onSetPanel('showAnalytics', false)}
           />
         )}
       </AnimatePresence>

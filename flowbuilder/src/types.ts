@@ -29,7 +29,7 @@ export type TextSubheadingEl = BaseElement & {
 export type TextBodyEl = BaseElement & {
   type: 'TextBody'
   text: string
-  fontWeight?: 'normal' | 'bold'
+  fontWeight?: 'normal' | 'bold' | 'italic' | 'bold_italic'
   strikethrough?: boolean
   visible?: boolean
   markdown?: boolean
@@ -38,7 +38,7 @@ export type TextBodyEl = BaseElement & {
 export type TextCaptionEl = BaseElement & {
   type: 'TextCaption'
   text: string
-  fontWeight?: 'normal' | 'bold'
+  fontWeight?: 'normal' | 'bold' | 'italic' | 'bold_italic'
   strikethrough?: boolean
   visible?: boolean
   markdown?: boolean
@@ -342,6 +342,8 @@ export type MessageLibraryEntry = {
   type: MessageType
   contentPayload: MessageContentPayload
   status: MessageStatus
+  category?: string
+  tags?: string[]
   createdAt: Date
   updatedAt: Date
 }
@@ -349,10 +351,13 @@ export type MessageLibraryEntry = {
 export type TriggerConfiguration = {
   triggerId: string
   triggerType: TriggerType
-  triggerValue: string | string[]
+  triggerValue: any // Can be string, string[], or object depending on trigger type
   nextAction: NextAction
   targetId: string
-  messageId: string
+  messageId?: string
+  isActive?: boolean
+  priority?: number
+  conditions?: any
   createdAt: Date
   updatedAt: Date
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Trash2, Hash, Globe, MessageCircle, Save } from 'lucide-react'
+import { Plus, Trash2, Hash, Globe, MessageCircle } from 'lucide-react'
 import { useMessageLibraryStore } from '../../state/messageLibraryStore'
 import type { TriggerType, NextAction, TriggerConfiguration } from '../../types'
 
@@ -302,9 +302,8 @@ export default function TriggerEditor({ messageId }: TriggerEditorProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSaveTrigger}
-                className="btn-primary text-sm flex items-center gap-2"
+                className="btn-primary text-sm"
               >
-                <Save className="w-4 h-4" />
                 Save
               </button>
               

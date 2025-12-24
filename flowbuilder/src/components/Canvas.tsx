@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Smartphone, Trash2 } from 'lucide-react'
+import { Smartphone, Trash2, Copy, Edit3 } from 'lucide-react'
 import { useFlowStore } from '../state/store'
 import { SortableItem } from './SortableItem'
 import PropertyEditorInline from './PropertyEditorInline'
@@ -10,7 +10,7 @@ import ConfirmDialog from './ConfirmDialog'
 import type { AnyElement } from '../types'
 
 export default function Canvas() {
-  const { screens, selectedScreenId, moveElement, updateElement } = useFlowStore()
+  const { screens, selectedScreenId, moveElement, updateElement, removeElement, duplicateElement } = useFlowStore()
   const screen = screens.find(s => s.id === selectedScreenId)
   const [selectedElement, setSelectedElement] = useState<AnyElement | null>(null)
   const [deletingElement, setDeletingElement] = useState<AnyElement | null>(null)
@@ -26,12 +26,83 @@ export default function Canvas() {
     moveElement(screen.id, oldIndex, newIndex)
   }
 
-  const handleDelete = (el: AnyElement) => {
+  const handleDelete = useCallback((el: AnyElement) => {
     if (!screen) return
-    const { removeElement } = useFlowStore.getState()
     removeElement(screen.id, el.id)
     setDeletingElement(null)
+    
+    // Clear selection if deleted element was selected
+    if (selectedElement?.id === el.id) {
+      setSelectedElement(null)
+    }
+  }, [screen, removeElement, selectedElement])
+
+  const handleDuplicate = useCallback((el: AnyElement) => {
+    if (!screen) return
+    duplicateElement(screen.id, el.id)
+  }, [screen, duplicateElement])
+
+  const getElementDisplayName = (el: AnyElement) => {
+    switch (el.type) {
+      case 'TextHeading': return 'Heading'
+      case 'TextSubheading': return 'Subheading'
+      case 'TextBody': return 'Body Text'
+      case 'TextCaption': return 'Caption'
+      case 'RichText': return 'Rich Text'
+      case 'TextInput': return 'Text Input'
+      case 'EmailInput': return 'Email Input'
+      case 'PasswordInput': return 'Password Input'
+      case 'PhoneInput': return 'Phone Input'
+      case 'RadioButtonsGroup': return 'Radio Buttons'
+      case 'TextArea': return 'Text Area'
+      case 'Dropdown': return 'Dropdown'
+      case 'CheckboxGroup': return 'Checkboxes'
+      case 'ChipsSelector': return 'Chips'
+      case 'OptIn': return 'Opt-in'
+      case 'EmbeddedLink': return 'Link'
+      case 'DatePicker': return 'Date Picker'
+      case 'CalendarPicker': return 'Calendar'
+      case 'Image': return 'Image'
+      case 'ImageCarousel': return 'Image Carousel'
+      case 'PhotoPicker': return 'Photo Picker'
+      case 'DocumentPicker': return 'Document Picker'
+      case 'NavigationList': return 'Navigation List'
+      case 'Footer': return 'Footer Button'
+      default: return el.type
+    }
   }
+
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete key or Backspace to delete selected element
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement && !e.ctrlKey && !e.metaKey) {
+        // Only if not in an input field
+        const activeElement = document.activeElement
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+          return
+        }
+        
+        e.preventDefault()
+        setDeletingElement(selectedElement)
+      }
+      
+      // Escape to clear selection
+      if (e.key === 'Escape') {
+        setSelectedElement(null)
+        setDeletingElement(null)
+      }
+      
+      // Ctrl+D to duplicate selected element
+      if (e.key === 'd' && (e.ctrlKey || e.metaKey) && selectedElement) {
+        e.preventDefault()
+        handleDuplicate(selectedElement)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedElement, handleDuplicate])
 
   if (!screen) {
     return (
@@ -103,16 +174,43 @@ export default function Canvas() {
                           {/* Hover Actions */}
                           <AnimatePresence>
                             {hoveredId === el.id && (
-                              <motion.button
+                              <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
-                                onClick={() => setDeletingElement(el)}
-                                className="absolute top-2 right-2 hypr-btn-danger p-1 z-10"
-                                aria-label="Delete"
+                                className="absolute top-2 right-2 flex items-center gap-1 z-10"
                               >
-                                <Trash2 className="w-3 h-3" />
-                              </motion.button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedElement(el)
+                                  }}
+                                  className="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-lg transition-colors"
+                                  title="Edit properties"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDuplicate(el)
+                                  }}
+                                  className="p-1 bg-green-600 hover:bg-green-700 text-white rounded shadow-lg transition-colors"
+                                  title="Duplicate"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setDeletingElement(el)
+                                  }}
+                                  className="p-1 bg-red-600 hover:bg-red-700 text-white rounded shadow-lg transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </motion.div>
                             )}
                           </AnimatePresence>
                         </SortableItem>
@@ -145,14 +243,19 @@ export default function Canvas() {
       </div>
 
       {/* Delete Confirmation */}
-      {deletingElement && (
-        <ConfirmDialog
-          title="Delete Component"
-          message={`Are you sure you want to delete this ${deletingElement.type}?`}
-          onConfirm={() => handleDelete(deletingElement)}
-          onCancel={() => setDeletingElement(null)}
-        />
-      )}
+      <AnimatePresence>
+        {deletingElement && (
+          <ConfirmDialog
+            title="Delete Component"
+            message={`Are you sure you want to delete this ${getElementDisplayName(deletingElement)}? This action cannot be undone.`}
+            onConfirm={() => handleDelete(deletingElement)}
+            onCancel={() => setDeletingElement(null)}
+            confirmText="Delete"
+            cancelText="Cancel"
+            type="danger"
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
@@ -165,34 +268,62 @@ function Preview({ el, onClick, isSelected }: { el: any; onClick: () => void; is
   switch (el.type) {
     case 'TextHeading':
       return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">HEADING</div>
+        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
+          <div className="hypr-component-type">
+            HEADING
+            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+          </div>
           <h1 className="text-lg font-bold text-slate-200">{el.text}</h1>
         </div>
       )
     case 'TextSubheading':
       return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">SUBHEADING</div>
+        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
+          <div className="hypr-component-type">
+            SUBHEADING
+            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+          </div>
           <h2 className="text-base font-semibold text-slate-200">{el.text}</h2>
         </div>
       )
     case 'TextBody':
       return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">BODY</div>
-          <p className={`text-sm text-gray-300 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
+        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
+          <div className="hypr-component-type">
+            BODY
+            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {el.markdown && <span className="ml-2 text-xs text-blue-400">(MD)</span>}
+          </div>
+          <p className={`text-sm text-gray-300 ${
+            el.fontWeight === 'bold' ? 'font-bold' : 
+            el.fontWeight === 'italic' ? 'italic' : 
+            el.fontWeight === 'bold_italic' ? 'font-bold italic' : ''
+          } ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
         </div>
       )
     case 'TextCaption':
       return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type">CAPTION</div>
-          <p className={`text-xs text-gray-400 ${el.fontWeight === 'bold' ? 'font-bold' : ''} ${el.strikethrough ? 'line-through' : ''}`}>
+        <div onClick={onClick} className={`${baseClass} ${el.visible === false ? 'opacity-50 border-dashed' : ''}`}>
+          <div className="hypr-component-type">
+            CAPTION
+            {el.visible === false && <span className="ml-2 text-xs text-red-400">(HIDDEN)</span>}
+            {el.markdown && <span className="ml-2 text-xs text-blue-400">(MD)</span>}
+            {el.text && el.text.length > 400 && <span className="ml-2 text-xs text-red-400">(400+ CHARS)</span>}
+          </div>
+          <p className={`text-xs text-gray-400 ${
+            el.fontWeight === 'bold' ? 'font-bold' : 
+            el.fontWeight === 'italic' ? 'italic' : 
+            el.fontWeight === 'bold_italic' ? 'font-bold italic' : ''
+          } ${el.strikethrough ? 'line-through' : ''}`}>
             {el.text}
           </p>
+          {el.text && el.text.length > 0 && (
+            <div className="text-xs text-slate-500 mt-1">
+              {el.text.length}/400 chars
+            </div>
+          )}
         </div>
       )
     case 'RichText':

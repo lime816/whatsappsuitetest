@@ -15,6 +15,7 @@ export interface AppState {
     showQRCodePanel: boolean
     showWebhookSetup: boolean
     showMessageLibrary: boolean
+    showAnalytics: boolean
   }
   
   // Flow Management
@@ -82,6 +83,7 @@ export const initialAppState: AppState = {
     showQRCodePanel: false,
     showWebhookSetup: false,
     showMessageLibrary: false,
+    showAnalytics: false,
   },
   flows: {
     allFlows: [],

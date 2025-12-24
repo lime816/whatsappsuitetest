@@ -178,12 +178,48 @@ export default function FlowPreviewPane({ flowId, flowName, onClose }: FlowPrevi
     return (
       <>
         {/* Text Elements */}
-        {(child.type === 'TextHeading' || child.type === 'TextSubheading' || child.type === 'TextBody' || child.type === 'TextCaption') && child.text && typeof child.text === 'string' && (
+        {(child.type === 'TextHeading' || child.type === 'TextSubheading' || child.type === 'TextBody' || child.type === 'TextCaption') && child.text && typeof child.text === 'string' && child.visible !== false && (
           <div>
             {child.type === 'TextHeading' && <h3 className="text-xl font-bold text-gray-900">{child.text}</h3>}
             {child.type === 'TextSubheading' && <h4 className="text-lg font-semibold text-gray-800">{child.text}</h4>}
-            {child.type === 'TextBody' && <p className="text-base text-gray-700">{child.text}</p>}
-            {child.type === 'TextCaption' && <p className="text-sm text-gray-600">{child.text}</p>}
+            {child.type === 'TextBody' && (
+              <p className={`text-base text-gray-700 ${
+                child.fontWeight === 'bold' ? 'font-bold' : 
+                child.fontWeight === 'italic' ? 'italic' : 
+                child.fontWeight === 'bold_italic' ? 'font-bold italic' : ''
+              } ${child.strikethrough ? 'line-through' : ''}`}>
+                {child.markdown ? (
+                  <span dangerouslySetInnerHTML={{ 
+                    __html: child.text
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                      .replace(/\n/g, '<br>')
+                  }} />
+                ) : (
+                  child.text
+                )}
+              </p>
+            )}
+            {child.type === 'TextCaption' && child.text.trim() !== '' && (
+              <p className={`text-sm text-gray-600 ${
+                child.fontWeight === 'bold' ? 'font-bold' : 
+                child.fontWeight === 'italic' ? 'italic' : 
+                child.fontWeight === 'bold_italic' ? 'font-bold italic' : ''
+              } ${child.strikethrough ? 'line-through' : ''}`}>
+                {child.markdown ? (
+                  <span dangerouslySetInnerHTML={{ 
+                    __html: child.text
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                      .replace(/\n/g, '<br>')
+                  }} />
+                ) : (
+                  child.text
+                )}
+              </p>
+            )}
           </div>
         )}
         {child.text && typeof child.text === 'object' && Object.keys(child.text).length > 0 && (

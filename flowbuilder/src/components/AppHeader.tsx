@@ -2,6 +2,7 @@ import React from 'react'
 import { Plus } from 'lucide-react'
 import { useFlowStore } from '../state/store'
 import { AppState } from '../state/appState'
+import { autoSaveService } from '../utils/autoSave'
 
 interface AppHeaderProps {
   state: AppState
@@ -12,7 +13,11 @@ interface AppHeaderProps {
 
 export default function AppHeader({ state, onTogglePanel, onCreateFlow, onGetAllFlows }: AppHeaderProps) {
   const { screens, addScreen, selectScreen, selectedScreenId } = useFlowStore()
-  const { panels, loading } = state
+  const { panels, loading, form } = state
+
+  const handleManualSave = () => {
+    autoSaveService.save(screens, form.flowName)
+  }
 
   return (
     <header className="hypr-header">
@@ -73,6 +78,15 @@ export default function AppHeader({ state, onTogglePanel, onCreateFlow, onGetAll
         </button>
         
         <button
+          onClick={handleManualSave}
+          className="hypr-btn"
+          title="Save Now [Ctrl+S]"
+          disabled={screens.length === 0}
+        >
+          SAVE
+        </button>
+        
+        <button
           onClick={onCreateFlow}
           className="hypr-btn-success"
           disabled={screens.length === 0 || loading.isCreatingFlow}
@@ -114,6 +128,14 @@ export default function AppHeader({ state, onTogglePanel, onCreateFlow, onGetAll
           title="Message Library [Ctrl+M]"
         >
           MSGS
+        </button>
+        
+        <button
+          onClick={() => onTogglePanel('showAnalytics')}
+          className={`hypr-btn ${panels.showAnalytics ? 'hypr-btn-primary' : ''}`}
+          title="Analytics Dashboard [Ctrl+A]"
+        >
+          STATS
         </button>
       </div>
     </header>

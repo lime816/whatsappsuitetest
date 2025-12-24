@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, X, MessageSquare, MousePointer, List, Play, Settings } from 'lucide-react'
+import { X, MessageSquare, MousePointer, List, Play, Settings } from 'lucide-react'
 import { useMessageLibraryStore, createNewMessage } from '../../state/messageLibraryStore'
 import type { MessageType, MessageStatus, MessageLibraryEntry } from '../../types'
 import StandardTextEditor from './MessageEditor/StandardTextEditor'
@@ -142,9 +142,8 @@ export default function MessageEditor({ messageId, onClose }: MessageEditorProps
         <div className="flex items-center gap-2">
           <button
             onClick={handleSave}
-            className="btn-primary flex items-center gap-2 text-sm"
+            className="btn-primary text-sm"
           >
-            <Save className="w-4 h-4" />
             Save
           </button>
           

@@ -20,6 +20,8 @@ const WhatsAppElement: React.FC<WhatsAppElementProps> = ({ element, onNavigate }
 
   switch (element.type) {
     case 'TextHeading':
+      // Check visibility constraint - default to true if not specified
+      if (element.visible === false) return null
       return (
         <div className={`${baseClasses} text-lg font-semibold text-gray-900 leading-tight`}>
           {element.text}
@@ -27,6 +29,8 @@ const WhatsAppElement: React.FC<WhatsAppElementProps> = ({ element, onNavigate }
       )
 
     case 'TextSubheading':
+      // Check visibility constraint - default to true if not specified
+      if (element.visible === false) return null
       return (
         <div className={`${baseClasses} text-base font-medium text-gray-800 leading-snug`}>
           {element.text}
@@ -34,20 +38,55 @@ const WhatsAppElement: React.FC<WhatsAppElementProps> = ({ element, onNavigate }
       )
 
     case 'TextBody':
+      // Check visibility constraint - default to true if not specified
+      if (element.visible === false) return null
+      
       return (
         <div className={`${baseClasses} text-sm text-gray-700 leading-relaxed ${
-          element.fontWeight === 'bold' ? 'font-semibold' : ''
+          element.fontWeight === 'bold' ? 'font-semibold' : 
+          element.fontWeight === 'italic' ? 'italic' : 
+          element.fontWeight === 'bold_italic' ? 'font-semibold italic' : ''
         } ${element.strikethrough ? 'line-through' : ''}`}>
-          {element.text}
+          {element.markdown ? (
+            // If markdown is enabled, render as markdown (simplified for preview)
+            <div dangerouslySetInnerHTML={{ 
+              __html: element.text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                .replace(/\n/g, '<br>')
+            }} />
+          ) : (
+            element.text
+          )}
         </div>
       )
 
     case 'TextCaption':
+      // Check visibility constraint - default to true if not specified
+      if (element.visible === false) return null
+      
+      // Validate text is not empty (as per limits and restrictions)
+      if (!element.text || element.text.trim() === '') return null
+      
       return (
         <div className={`${baseClasses} text-xs text-gray-500 ${
-          element.fontWeight === 'bold' ? 'font-semibold' : ''
+          element.fontWeight === 'bold' ? 'font-semibold' : 
+          element.fontWeight === 'italic' ? 'italic' : 
+          element.fontWeight === 'bold_italic' ? 'font-semibold italic' : ''
         } ${element.strikethrough ? 'line-through' : ''}`}>
-          {element.text}
+          {element.markdown ? (
+            // If markdown is enabled, render as markdown (simplified for preview)
+            <div dangerouslySetInnerHTML={{ 
+              __html: element.text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                .replace(/\n/g, '<br>')
+            }} />
+          ) : (
+            element.text
+          )}
         </div>
       )
 

@@ -14,6 +14,7 @@ const webhookRoutes = require('./routes/webhook');
 const triggerRoutes = require('./routes/triggers');
 const whatsappRoutes = require('./routes/whatsapp');
 const messageLibraryRoutes = require('./routes/messageLibrary');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
@@ -144,6 +145,7 @@ app.use('/webhook', webhookRoutes);
 app.use('/api/triggers', triggerRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/message-library', messageLibraryRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -155,6 +157,7 @@ app.get('/', (req, res) => {
       triggers: '/api/triggers',
       whatsapp: '/api/whatsapp',
       messageLibrary: '/api/message-library',
+      analytics: '/api/analytics',
       health: '/health'
     }
   });
