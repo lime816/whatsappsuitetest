@@ -61,12 +61,7 @@ export default function AppLayout({ state, onLayoutChange, onFormUpdate }: AppLa
         className="hypr-sidebar tile-left"
         style={{ width: `${layout.leftPanelWidth}px` }}
       >
-        <HyprScreenDesigner 
-          flowName={form.flowName}
-          setFlowName={(name) => onFormUpdate('flowName', name)}
-          customMessage={form.customMessage}
-          setCustomMessage={(message) => onFormUpdate('customMessage', message)}
-        />
+        <HyprScreenDesigner />
       </div>
 
       {/* Left Resizer */}

@@ -4,12 +4,6 @@ import { Plus, X, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { useFlowStore } from '../state/store'
 import type { ElementType } from '../types'
 
-interface HyprScreenDesignerProps {
-  flowName: string
-  setFlowName: (name: string) => void
-  customMessage: string
-  setCustomMessage: (message: string) => void
-}
 
 const componentCategories = {
   'Text': [
@@ -50,7 +44,7 @@ const componentCategories = {
   ],
 }
 
-export default function HyprScreenDesigner({ flowName, setFlowName, customMessage, setCustomMessage }: HyprScreenDesignerProps) {
+export default function HyprScreenDesigner() {
   const { screens, selectedScreenId, selectScreen, removeScreen, addElement, addScreen } = useFlowStore()
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
@@ -192,60 +186,7 @@ export default function HyprScreenDesigner({ flowName, setFlowName, customMessag
         </div>
       </div>
 
-      <div className="hypr-divider"></div>
-
-      {/* Flow Config Section */}
-      <div className="hypr-section">
-        <div className="hypr-section-header">
-          <span className="hypr-section-title">FLOW_CONFIG</span>
-        </div>
-        
-        <div className="hypr-section-content space-y-3">
-          <div>
-            <label className="hypr-label">FLOW_NAME</label>
-            <input
-              type="text"
-              value={flowName}
-              onChange={(e) => setFlowName(e.target.value)}
-              className="hypr-input"
-              placeholder="Enter flow name..."
-            />
-          </div>
-          
-          <div>
-            <label className="hypr-label">ACTIVATION_MSG</label>
-            <textarea
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              className="hypr-textarea"
-              rows={3}
-              placeholder="Enter activation message..."
-            />
-          </div>
-          
-          {/* Quick presets */}
-          <div className="flex flex-wrap gap-1">
-            <button
-              onClick={() => setCustomMessage('Please complete this form to continue with your registration.')}
-              className="hypr-preset-btn"
-            >
-              REG
-            </button>
-            <button
-              onClick={() => setCustomMessage('Fill out this survey to share your feedback with us.')}
-              className="hypr-preset-btn"
-            >
-              SURVEY
-            </button>
-            <button
-              onClick={() => setCustomMessage('Complete this application form to get started.')}
-              className="hypr-preset-btn"
-            >
-              APP
-            </button>
-          </div>
-        </div>
-      </div>
+      
     </div>
   )
 }
