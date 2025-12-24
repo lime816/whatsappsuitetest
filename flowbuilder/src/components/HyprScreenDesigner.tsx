@@ -46,7 +46,12 @@ const componentCategories = {
 
 export default function HyprScreenDesigner() {
   const { screens, selectedScreenId, selectScreen, removeScreen, addElement, addScreen } = useFlowStore()
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(() => {
+    return Object.keys(componentCategories).reduce((acc, key) => {
+      acc[key] = true
+      return acc
+    }, {} as Record<string, boolean>)
+  })
   const [searchTerm, setSearchTerm] = useState('')
 
   const toggleCategory = (category: string) => {
