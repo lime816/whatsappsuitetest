@@ -464,33 +464,34 @@ function mapElement(el: AnyElement, si: number, ei: number, currentScreen?: Scre
       result.markdown = true
       return result
     }
-    case 'If': {
-      const result: any = { 
-        type: 'If', 
-        condition: el.condition,
-        then: el.then.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
-      }
-      if (el.else && el.else.length > 0) {
-        result.else = el.else.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
-      }
-      if (el.visible !== undefined) result.visible = el.visible
-      return result
-    }
-    case 'Switch': {
-      const result: any = { 
-        type: 'Switch', 
-        value: el.value,
-        cases: el.cases.map(caseItem => ({
-          case: caseItem.case,
-          elements: caseItem.elements.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
-        }))
-      }
-      if (el.default && el.default.length > 0) {
-        result.default = el.default.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
-      }
-      if (el.visible !== undefined) result.visible = el.visible
-      return result
-    }
+    // Commented out logic components for better performance
+    // case 'If': {
+    //   const result: any = { 
+    //     type: 'If', 
+    //     condition: el.condition,
+    //     then: el.then.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+    //   }
+    //   if (el.else && el.else.length > 0) {
+    //     result.else = el.else.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+    //   }
+    //   if (el.visible !== undefined) result.visible = el.visible
+    //   return result
+    // }
+    // case 'Switch': {
+    //   const result: any = { 
+    //     type: 'Switch', 
+    //     value: el.value,
+    //     cases: el.cases.map(caseItem => ({
+    //       case: caseItem.case,
+    //       elements: caseItem.elements.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+    //     }))
+    //   }
+    //   if (el.default && el.default.length > 0) {
+    //     result.default = el.default.map((childEl, idx) => mapElement(childEl, si, idx, currentScreen, allScreens))
+    //   }
+    //   if (el.visible !== undefined) result.visible = el.visible
+    //   return result
+    // }
     case 'TextInput': {
       const result: any = { 
         type: 'TextInput',

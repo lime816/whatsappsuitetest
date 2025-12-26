@@ -13,10 +13,11 @@ const componentCategories = {
     { key: 'TextCaption', label: 'Caption', desc: 'Small text' },
     { key: 'RichText', label: 'Rich Text', desc: 'Markdown' },
   ],
-  'Logic': [
-    { key: 'If', label: 'If Condition', desc: 'Conditional content' },
-    { key: 'Switch', label: 'Switch', desc: 'Multi-case logic' },
-  ],
+  // Commented out Logic section for better performance
+  // 'Logic': [
+  //   { key: 'If', label: 'If Condition', desc: 'Conditional content' },
+  //   { key: 'Switch', label: 'Switch', desc: 'Multi-case logic' },
+  // ],
   'Input': [
     { key: 'TextInput', label: 'Text Input', desc: 'Single line' },
     { key: 'EmailInput', label: 'Email Input', desc: 'Email field' },

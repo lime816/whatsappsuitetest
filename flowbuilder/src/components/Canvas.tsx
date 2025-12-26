@@ -62,8 +62,8 @@ export default function Canvas() {
       case 'TextBody': return 'Body Text'
       case 'TextCaption': return 'Caption'
       case 'RichText': return 'Rich Text'
-      case 'If': return 'If Condition'
-      case 'Switch': return 'Switch'
+      // case 'If': return 'If Condition'
+      // case 'Switch': return 'Switch'
       case 'TextInput': return 'Text Input'
       case 'EmailInput': return 'Email Input'
       case 'PasswordInput': return 'Password Input'
@@ -190,15 +190,26 @@ export default function Canvas() {
               )}
               
               {screenValidation.isValid && (
-                <Info className="w-4 h-4 text-green-400" title="All validations passed" />
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowValidationTooltip('screen-valid')}
+                  onMouseLeave={() => setShowValidationTooltip(null)}
+                >
+                  <Info className="w-4 h-4 text-green-400" />
+                  {showValidationTooltip === 'screen-valid' && (
+                    <div className="absolute top-6 left-0 z-50 bg-green-900 border border-green-700 rounded p-2 text-xs text-white whitespace-nowrap shadow-lg">
+                      All validations passed
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Canvas Content */}
-      <div className="flex-1 overflow-y-auto hypr-scrollbar">
+      {/* Canvas Content - Improved scrolling */}
+      <div className="flex-1 overflow-y-auto hypr-scrollbar" style={{ maxHeight: 'calc(100vh - 120px)' }}>
         {screen.elements.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -212,7 +223,7 @@ export default function Canvas() {
         ) : (
           <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={screen.elements.map(e => e.id)} strategy={verticalListSortingStrategy}>
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2 min-h-0">
                 <AnimatePresence>
                   {screen.elements.map((el, idx) => (
                     <motion.div
@@ -285,7 +296,7 @@ export default function Canvas() {
                         </SortableItem>
                       </div>
 
-                      {/* Inline Property Editor */}
+                      {/* Inline Property Editor - Improved positioning */}
                       <AnimatePresence>
                         {selectedElement?.id === el.id && (
                           <motion.div
@@ -305,6 +316,8 @@ export default function Canvas() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                {/* Add padding at bottom to ensure last element is scrollable */}
+                <div className="h-20"></div>
               </div>
             </SortableContext>
           </DndContext>
@@ -495,48 +508,49 @@ function Preview({
           {el.text && renderCharacterCount(el.text, 4096)}
         </div>
       )
-    case 'If':
-      return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type flex items-center">
-            IF CONDITION
-            {renderValidationIndicators()}
-          </div>
-          <div className="text-gray-300 text-sm">
-            <div className="text-xs text-blue-400 mb-1">Condition: {el.condition}</div>
-            <div className="border-l-2 border-green-500 pl-2 mb-2">
-              <div className="text-xs text-green-400">THEN ({el.then?.length || 0} elements)</div>
-            </div>
-            {el.else && el.else.length > 0 && (
-              <div className="border-l-2 border-red-500 pl-2">
-                <div className="text-xs text-red-400">ELSE ({el.else.length} elements)</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    case 'Switch':
-      return (
-        <div onClick={onClick} className={baseClass}>
-          <div className="hypr-component-type flex items-center">
-            SWITCH
-            {renderValidationIndicators()}
-          </div>
-          <div className="text-gray-300 text-sm">
-            <div className="text-xs text-blue-400 mb-1">Value: {el.value}</div>
-            {el.cases?.map((caseItem, idx) => (
-              <div key={idx} className="border-l-2 border-yellow-500 pl-2 mb-1">
-                <div className="text-xs text-yellow-400">CASE "{caseItem.case}" ({caseItem.elements?.length || 0} elements)</div>
-              </div>
-            ))}
-            {el.default && el.default.length > 0 && (
-              <div className="border-l-2 border-gray-500 pl-2">
-                <div className="text-xs text-gray-400">DEFAULT ({el.default.length} elements)</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )
+    // Commented out conditional components for better scrolling performance
+    // case 'If':
+    //   return (
+    //     <div onClick={onClick} className={baseClass}>
+    //       <div className="hypr-component-type flex items-center">
+    //         IF CONDITION
+    //         {renderValidationIndicators()}
+    //       </div>
+    //       <div className="text-gray-300 text-sm">
+    //         <div className="text-xs text-blue-400 mb-1">Condition: {el.condition}</div>
+    //         <div className="border-l-2 border-green-500 pl-2 mb-2">
+    //           <div className="text-xs text-green-400">THEN ({el.then?.length || 0} elements)</div>
+    //         </div>
+    //         {el.else && el.else.length > 0 && (
+    //           <div className="border-l-2 border-red-500 pl-2">
+    //             <div className="text-xs text-red-400">ELSE ({el.else.length} elements)</div>
+    //           </div>
+    //         )}
+    //       </div>
+    //     </div>
+    //   )
+    // case 'Switch':
+    //   return (
+    //     <div onClick={onClick} className={baseClass}>
+    //       <div className="hypr-component-type flex items-center">
+    //         SWITCH
+    //         {renderValidationIndicators()}
+    //       </div>
+    //       <div className="text-gray-300 text-sm">
+    //         <div className="text-xs text-blue-400 mb-1">Value: {el.value}</div>
+    //         {el.cases?.map((caseItem, idx) => (
+    //           <div key={idx} className="border-l-2 border-yellow-500 pl-2 mb-1">
+    //             <div className="text-xs text-yellow-400">CASE "{caseItem.case}" ({caseItem.elements?.length || 0} elements)</div>
+    //           </div>
+    //         ))}
+    //         {el.default && el.default.length > 0 && (
+    //           <div className="border-l-2 border-gray-500 pl-2">
+    //             <div className="text-xs text-gray-400">DEFAULT ({el.default.length} elements)</div>
+    //           </div>
+    //         )}
+    //       </div>
+    //     </div>
+    //   )
     case 'TextInput':
       return (
         <div onClick={onClick} className={baseClass}>

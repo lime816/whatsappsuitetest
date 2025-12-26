@@ -196,8 +196,8 @@ export default function PropertyEditorInline({ screenId, element, onClose }: Pro
         </button>
       </div>
 
-      {/* Fields */}
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      {/* Fields - Improved scrolling */}
+      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
         {renderFields(localElement, updateField)}
       </div>
     </div>
@@ -1903,162 +1903,163 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
         </>
       )
 
-    case 'If':
-      return (
-        <div className="space-y-3">
-          <div>
-            <HelpTooltip content="condition">
-              <label className="block text-xs font-medium text-slate-400 mb-1">Condition</label>
-            </HelpTooltip>
-            <input
-              type="text"
-              value={el.condition}
-              onChange={(e) => update('condition', e.target.value)}
-              className="input-field text-sm font-mono"
-              placeholder="${data.show_content}"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Dynamic expression that evaluates to true/false
-            </p>
-          </div>
-          
-          <div>
-            <HelpTooltip content="visible">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                <input
-                  type="checkbox"
-                  checked={el.visible !== false}
-                  onChange={(e) => update('visible', e.target.checked)}
-                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
-                />
-                Visible
-              </label>
-            </HelpTooltip>
-            <p className="text-xs text-slate-500 mt-1">
-              Dynamic: ${'{data.is_visible}'} | Default: True
-            </p>
-          </div>
-          
-          <div className="border-t border-slate-600 pt-3">
-            <p className="text-xs text-slate-400 mb-2">
-              Configure "then" and "else" content by editing the nested elements in the preview
-            </p>
-            <div className="text-xs text-slate-500 space-y-1">
-              <div>• Then: {el.then?.length || 0} element(s)</div>
-              <div>• Else: {el.else?.length || 0} element(s)</div>
-            </div>
-          </div>
-        </div>
-      )
+    // Commented out conditional components for better performance
+    // case 'If':
+    //   return (
+    //     <div className="space-y-3">
+    //       <div>
+    //         <HelpTooltip content="condition">
+    //           <label className="block text-xs font-medium text-slate-400 mb-1">Condition</label>
+    //         </HelpTooltip>
+    //         <input
+    //           type="text"
+    //           value={el.condition}
+    //           onChange={(e) => update('condition', e.target.value)}
+    //           className="input-field text-sm font-mono"
+    //           placeholder="${data.show_content}"
+    //         />
+    //         <p className="text-xs text-slate-500 mt-1">
+    //           Dynamic expression that evaluates to true/false
+    //         </p>
+    //       </div>
+    //       
+    //       <div>
+    //         <HelpTooltip content="visible">
+    //           <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+    //             <input
+    //               type="checkbox"
+    //               checked={el.visible !== false}
+    //               onChange={(e) => update('visible', e.target.checked)}
+    //               className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+    //             />
+    //             Visible
+    //           </label>
+    //         </HelpTooltip>
+    //         <p className="text-xs text-slate-500 mt-1">
+    //           Dynamic: ${'{data.is_visible}'} | Default: True
+    //         </p>
+    //       </div>
+    //       
+    //       <div className="border-t border-slate-600 pt-3">
+    //         <p className="text-xs text-slate-400 mb-2">
+    //           Configure "then" and "else" content by editing the nested elements in the preview
+    //         </p>
+    //         <div className="text-xs text-slate-500 space-y-1">
+    //           <div>• Then: {el.then?.length || 0} element(s)</div>
+    //           <div>• Else: {el.else?.length || 0} element(s)</div>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   )
 
-    case 'Switch':
-      return (
-        <div className="space-y-3">
-          <div>
-            <HelpTooltip content="value">
-              <label className="block text-xs font-medium text-slate-400 mb-1">Switch Value</label>
-            </HelpTooltip>
-            <input
-              type="text"
-              value={el.value}
-              onChange={(e) => update('value', e.target.value)}
-              className="input-field text-sm font-mono"
-              placeholder="${data.user_type}"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Dynamic expression to match against cases
-            </p>
-          </div>
-          
-          <div>
-            <HelpTooltip content="visible">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                <input
-                  type="checkbox"
-                  checked={el.visible !== false}
-                  onChange={(e) => update('visible', e.target.checked)}
-                  className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
-                />
-                Visible
-              </label>
-            </HelpTooltip>
-            <p className="text-xs text-slate-500 mt-1">
-              Dynamic: ${'{data.is_visible}'} | Default: True
-            </p>
-          </div>
-          
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-medium text-slate-400">Cases</label>
-              <button 
-                onClick={() => {
-                  const newCases = [...(el.cases || []), { 
-                    case: 'new_case', 
-                    elements: [{
-                      id: `case_${Date.now()}`,
-                      type: 'TextBody',
-                      text: 'New case content',
-                      fontWeight: 'normal',
-                      strikethrough: false,
-                      visible: true,
-                      markdown: false
-                    }]
-                  }]
-                  update('cases', newCases)
-                }}
-                className="text-xs text-whatsapp-500 hover:text-whatsapp-400 flex items-center gap-1"
-              >
-                <Plus className="w-3 h-3" />
-                Add Case
-              </button>
-            </div>
-            <div className="space-y-2">
-              {(el.cases || []).map((caseItem: any, idx: number) => (
-                <div key={idx} className="border border-slate-600 rounded p-2 space-y-2">
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={caseItem.case}
-                      onChange={(e) => {
-                        const newCases = [...(el.cases || [])]
-                        newCases[idx] = { ...caseItem, case: e.target.value }
-                        update('cases', newCases)
-                      }}
-                      className="input-field flex-1 text-xs"
-                      placeholder="case_value"
-                    />
-                    <button
-                      onClick={() => {
-                        const newCases = (el.cases || []).filter((_: any, i: number) => i !== idx)
-                        update('cases', newCases)
-                      }}
-                      className="text-red-500 hover:text-red-400 p-1"
-                      aria-label="Remove case"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    Elements: {caseItem.elements?.length || 0}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Each case value will be matched against the switch value
-            </p>
-          </div>
-          
-          <div className="border-t border-slate-600 pt-3">
-            <p className="text-xs text-slate-400 mb-2">
-              Configure case content and default by editing the nested elements in the preview
-            </p>
-            <div className="text-xs text-slate-500">
-              Default: {el.default?.length || 0} element(s)
-            </div>
-          </div>
-        </div>
-      )
+    // case 'Switch':
+    //   return (
+    //     <div className="space-y-3">
+    //       <div>
+    //         <HelpTooltip content="value">
+    //           <label className="block text-xs font-medium text-slate-400 mb-1">Switch Value</label>
+    //         </HelpTooltip>
+    //         <input
+    //           type="text"
+    //           value={el.value}
+    //           onChange={(e) => update('value', e.target.value)}
+    //           className="input-field text-sm font-mono"
+    //           placeholder="${data.user_type}"
+    //         />
+    //         <p className="text-xs text-slate-500 mt-1">
+    //           Dynamic expression to match against cases
+    //         </p>
+    //       </div>
+    //       
+    //       <div>
+    //         <HelpTooltip content="visible">
+    //           <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
+    //             <input
+    //               type="checkbox"
+    //               checked={el.visible !== false}
+    //               onChange={(e) => update('visible', e.target.checked)}
+    //               className="w-3 h-3 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+    //             />
+    //             Visible
+    //           </label>
+    //         </HelpTooltip>
+    //         <p className="text-xs text-slate-500 mt-1">
+    //           Dynamic: ${'{data.is_visible}'} | Default: True
+    //         </p>
+    //       </div>
+    //       
+    //       <div>
+    //         <div className="flex items-center justify-between mb-2">
+    //           <label className="block text-xs font-medium text-slate-400">Cases</label>
+    //           <button 
+    //             onClick={() => {
+    //               const newCases = [...(el.cases || []), { 
+    //                 case: 'new_case', 
+    //                 elements: [{
+    //                   id: `case_${Date.now()}`,
+    //                   type: 'TextBody',
+    //                   text: 'New case content',
+    //                   fontWeight: 'normal',
+    //                   strikethrough: false,
+    //                   visible: true,
+    //                   markdown: false
+    //                 }]
+    //               }]
+    //               update('cases', newCases)
+    //             }}
+    //             className="text-xs text-whatsapp-500 hover:text-whatsapp-400 flex items-center gap-1"
+    //           >
+    //             <Plus className="w-3 h-3" />
+    //             Add Case
+    //           </button>
+    //         </div>
+    //         <div className="space-y-2">
+    //           {(el.cases || []).map((caseItem: any, idx: number) => (
+    //             <div key={idx} className="border border-slate-600 rounded p-2 space-y-2">
+    //               <div className="flex gap-2 items-center">
+    //                 <input
+    //                   type="text"
+    //                   value={caseItem.case}
+    //                   onChange={(e) => {
+    //                     const newCases = [...(el.cases || [])]
+    //                     newCases[idx] = { ...caseItem, case: e.target.value }
+    //                     update('cases', newCases)
+    //                   }}
+    //                   className="input-field flex-1 text-xs"
+    //                   placeholder="case_value"
+    //                 />
+    //                 <button
+    //                   onClick={() => {
+    //                     const newCases = (el.cases || []).filter((_: any, i: number) => i !== idx)
+    //                     update('cases', newCases)
+    //                   }}
+    //                   className="text-red-500 hover:text-red-400 p-1"
+    //                   aria-label="Remove case"
+    //                 >
+    //                   <Trash2 className="w-3 h-3" />
+    //                 </button>
+    //               </div>
+    //               <div className="text-xs text-slate-500">
+    //                 Elements: {caseItem.elements?.length || 0}
+    //               </div>
+    //             </div>
+    //           ))}
+    //         </div>
+    //         <p className="text-xs text-slate-500 mt-1">
+    //           Each case value will be matched against the switch value
+    //         </p>
+    //       </div>
+    //       
+    //       <div className="border-t border-slate-600 pt-3">
+    //         <p className="text-xs text-slate-400 mb-2">
+    //           Configure case content and default by editing the nested elements in the preview
+    //         </p>
+    //         <div className="text-xs text-slate-500">
+    //           Default: {el.default?.length || 0} element(s)
+    //         </div>
+    //       </div>
+    //     </div>
+    //   )
 
     default:
       return null

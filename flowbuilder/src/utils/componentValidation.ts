@@ -194,23 +194,24 @@ export function validateComponent(element: AnyElement): ComponentValidation {
       }
       break
 
-    case 'If':
-      if (!('condition' in element) || !element.condition) {
-        errors.push({ type: 'error', message: 'If condition is required' })
-      }
-      if (!('then' in element) || !element.then || element.then.length === 0) {
-        warnings.push({ type: 'warning', message: 'If component has no "then" elements' })
-      }
-      break
+    // Commented out logic components for better performance
+    // case 'If':
+    //   if (!('condition' in element) || !element.condition) {
+    //     errors.push({ type: 'error', message: 'If condition is required' })
+    //   }
+    //   if (!('then' in element) || !element.then || element.then.length === 0) {
+    //     warnings.push({ type: 'warning', message: 'If component has no "then" elements' })
+    //   }
+    //   break
 
-    case 'Switch':
-      if (!('value' in element) || !element.value) {
-        errors.push({ type: 'error', message: 'Switch value is required' })
-      }
-      if (!('cases' in element) || !element.cases || element.cases.length === 0) {
-        errors.push({ type: 'error', message: 'Switch component needs at least one case' })
-      }
-      break
+    // case 'Switch':
+    //   if (!('value' in element) || !element.value) {
+    //     errors.push({ type: 'error', message: 'Switch value is required' })
+    //   }
+    //   if (!('cases' in element) || !element.cases || element.cases.length === 0) {
+    //     errors.push({ type: 'error', message: 'Switch component needs at least one case' })
+    //   }
+    //   break
 
     case 'EmbeddedLink':
       if (!element.text) {
