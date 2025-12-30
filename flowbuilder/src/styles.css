@@ -66,6 +66,11 @@
     @apply w-full bg-slate-700 border border-slate-500 px-2 py-1.5 text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors font-mono text-xs;
   }
   
+  /* Fallback for input-field class - matches darkInputClass */
+  .input-field {
+    @apply w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
   .hypr-textarea {
     @apply w-full bg-slate-700 border border-slate-500 px-2 py-1.5 text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors font-mono text-xs resize-none;
   }

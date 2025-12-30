@@ -217,24 +217,24 @@ export default function WebhookSetup({ flows }: WebhookSetupProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-3">
-        <Globe className="h-6 w-6 text-blue-600" />
-        <h2 className="text-xl font-semibold">Webhook Setup & Backend Integration</h2>
+        <Globe className="h-6 w-6 text-cyan-400" />
+        <h2 className="text-xl font-semibold text-slate-200">Webhook Setup & Backend Integration</h2>
       </div>
 
       {/* Backend Status */}
-      <div className="bg-gray-50 rounded-lg p-4">
+      <div className="bg-slate-800 rounded-lg p-4 border border-slate-600">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium flex items-center space-x-2">
             <Settings className="h-4 w-4" />
-            <span>Backend Configuration</span>
+            <span className="text-slate-200">Backend Configuration</span>
           </h3>
           <div className="flex items-center space-x-2">
             {webhookStatus.isBackendRunning ? (
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-whatsapp-500" />
             ) : (
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className="h-4 w-4 text-red-400" />
             )}
-            <span className={`text-sm ${webhookStatus.isBackendRunning ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`text-sm ${webhookStatus.isBackendRunning ? 'text-whatsapp-400' : 'text-red-400'}`}>
               {webhookStatus.isBackendRunning ? 'Connected' : 'Disconnected'}
             </span>
           </div>

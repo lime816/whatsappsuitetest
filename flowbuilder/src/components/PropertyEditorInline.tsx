@@ -204,6 +204,11 @@ export default function PropertyEditorInline({ screenId, element, onClose }: Pro
   )
 }
 
+// Define consistent dark input styling
+const darkInputClass = "w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+const darkSelectClass = "w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+const darkTextareaClass = "w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+
 function renderFields(el: AnyElement, update: (field: string, value: any) => void) {
   switch (el.type) {
     case 'TextHeading':
@@ -217,7 +222,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className={`input-field text-sm ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
+              className={`${darkInputClass} ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
               placeholder="Enter heading text"
               maxLength={80}
             />
@@ -252,7 +257,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className={`input-field text-sm ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
+              className={`${darkInputClass} ${el.text && el.text.length > 80 ? 'border-red-500' : ''}`}
               placeholder="Enter subheading text"
               maxLength={80}
             />
@@ -284,7 +289,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <textarea
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className="input-field text-sm"
+              className={darkTextareaClass}
               rows={3}
               placeholder="Enter body text"
             />
@@ -298,7 +303,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.fontWeight || 'normal'}
               onChange={(e) => update('fontWeight', e.target.value)}
-              className="input-field text-sm"
+              className={darkSelectClass}
             >
               <option value="normal">Normal</option>
               <option value="bold">Bold</option>
@@ -370,7 +375,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                   update('text', value)
                 }
               }}
-              className={`input-field text-sm ${el.text && el.text.length > 400 ? 'border-red-500' : ''}`}
+              className={`${darkTextareaClass} ${el.text && el.text.length > 400 ? 'border-red-500' : ''}`}
               rows={2}
               placeholder="Enter caption text"
               maxLength={400}
@@ -395,7 +400,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.fontWeight || 'normal'}
               onChange={(e) => update('fontWeight', e.target.value)}
-              className="input-field text-sm"
+              className={darkSelectClass}
             >
               <option value="normal">Normal</option>
               <option value="bold">Bold</option>
@@ -460,7 +465,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
           <textarea
             value={el.text}
             onChange={(e) => update('text', e.target.value)}
-            className="input-field text-sm font-mono"
+            className={`${darkTextareaClass} font-mono`}
             rows={6}
             placeholder="# Heading&#10;&#10;**Bold** and *italic* text"
           />
@@ -481,7 +486,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className={`input-field text-sm ${el.label && el.label.length > 40 ? 'border-red-500' : ''}`}
+              className={`${darkInputClass} ${el.label && el.label.length > 40 ? 'border-red-500' : ''}`}
               placeholder="Input label"
               maxLength={40}
             />
@@ -495,7 +500,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="field_name"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -509,7 +514,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.inputType || 'text'}
               onChange={(e) => update('inputType', e.target.value)}
-              className="input-field text-sm"
+              className={darkSelectClass}
             >
               <option value="text">Text</option>
               <option value="number">Number</option>
@@ -525,7 +530,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.pattern || ''}
               onChange={(e) => update('pattern', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="^[0-9]+$"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -540,7 +545,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className={`input-field text-sm ${el.helperText && el.helperText.length > 80 ? 'border-red-500' : ''}`}
+              className={`${darkInputClass} ${el.helperText && el.helperText.length > 80 ? 'border-red-500' : ''}`}
               placeholder="E.g. Enter your phone number"
               maxLength={80}
             />
@@ -551,7 +556,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.labelVariant || 'standard'}
               onChange={(e) => update('labelVariant', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="standard">Standard</option>
               <option value="floating">Floating</option>
@@ -567,7 +572,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.initValue || ''}
               onChange={(e) => update('initValue', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Default value"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -580,7 +585,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={typeof el.errorMessage === 'string' ? el.errorMessage : ''}
               onChange={(e) => update('errorMessage', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Custom error message"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -611,7 +616,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Email label"
             />
           </div>
@@ -621,7 +626,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="email_field"
             />
           </div>
@@ -631,7 +636,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="E.g. Enter your email address"
             />
           </div>
@@ -657,7 +662,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Password label"
             />
           </div>
@@ -667,7 +672,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="password_field"
             />
           </div>
@@ -677,7 +682,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.minChars || ''}
               onChange={(e) => update('minChars', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="8"
             />
           </div>
@@ -687,7 +692,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxChars || ''}
               onChange={(e) => update('maxChars', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="50"
             />
           </div>
@@ -697,7 +702,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="E.g. Must be at least 8 characters"
             />
           </div>
@@ -723,7 +728,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Phone label"
             />
           </div>
@@ -733,7 +738,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="phone_field"
             />
           </div>
@@ -743,7 +748,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="E.g. Include country code"
             />
           </div>
@@ -769,7 +774,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Checkbox group label"
             />
           </div>
@@ -779,7 +784,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="checkbox_group"
             />
           </div>
@@ -789,7 +794,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.minSelectedItems || ''}
               onChange={(e) => update('minSelectedItems', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="0"
             />
           </div>
@@ -799,7 +804,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxSelectedItems || ''}
               onChange={(e) => update('maxSelectedItems', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="No limit"
             />
           </div>
@@ -809,7 +814,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Additional description"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -822,7 +827,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.onSelectAction || ''}
               onChange={(e) => update('onSelectAction', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Action when item selected"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -835,7 +840,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.onUnselectAction || ''}
               onChange={(e) => update('onUnselectAction', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Action when item unselected"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -847,7 +852,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.mediaSize || 'medium'}
               onChange={(e) => update('mediaSize', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="small">Small</option>
               <option value="medium">Medium</option>
@@ -903,7 +908,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Chips selector label"
             />
           </div>
@@ -913,7 +918,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="chips_selector"
             />
           </div>
@@ -923,7 +928,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.minSelectedItems || ''}
               onChange={(e) => update('minSelectedItems', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="0"
             />
           </div>
@@ -933,7 +938,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxSelectedItems || ''}
               onChange={(e) => update('maxSelectedItems', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="No limit"
             />
           </div>
@@ -943,7 +948,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Additional description"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -956,7 +961,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.onSelectAction || ''}
               onChange={(e) => update('onSelectAction', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Action when item selected"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -969,7 +974,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.onUnselectAction || ''}
               onChange={(e) => update('onUnselectAction', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Action when item unselected"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -981,7 +986,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.mediaSize || 'medium'}
               onChange={(e) => update('mediaSize', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="small">Small</option>
               <option value="medium">Medium</option>
@@ -1037,7 +1042,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="I agree to the terms"
             />
           </div>
@@ -1047,7 +1052,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="opt_in"
             />
           </div>
@@ -1073,7 +1078,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.text}
               onChange={(e) => update('text', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Click here"
             />
           </div>
@@ -1083,7 +1088,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="url"
               value={el.url || ''}
               onChange={(e) => update('url', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="https://example.com"
             />
           </div>
@@ -1099,7 +1104,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Select date"
             />
           </div>
@@ -1109,7 +1114,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="date_picker"
             />
           </div>
@@ -1119,7 +1124,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="date"
               value={el.minDate || ''}
               onChange={(e) => update('minDate', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1128,7 +1133,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="date"
               value={el.maxDate || ''}
               onChange={(e) => update('maxDate', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1137,7 +1142,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Select your preferred date"
             />
           </div>
@@ -1163,7 +1168,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Select date range"
             />
           </div>
@@ -1173,7 +1178,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="calendar_picker"
             />
           </div>
@@ -1182,7 +1187,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.mode || 'single'}
               onChange={(e) => update('mode', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="single">Single Date</option>
               <option value="range">Date Range</option>
@@ -1194,7 +1199,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.title || ''}
               onChange={(e) => update('title', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Calendar title"
             />
           </div>
@@ -1204,7 +1209,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Calendar description"
             />
           </div>
@@ -1230,7 +1235,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="url"
               value={el.src}
               onChange={(e) => update('src', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="https://example.com/image.jpg"
             />
           </div>
@@ -1240,7 +1245,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.altText || ''}
               onChange={(e) => update('altText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Image description"
             />
           </div>
@@ -1250,7 +1255,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.width || ''}
               onChange={(e) => update('width', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Auto"
             />
           </div>
@@ -1260,7 +1265,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.height || ''}
               onChange={(e) => update('height', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Auto"
             />
           </div>
@@ -1269,7 +1274,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.scaleType || 'cover'}
               onChange={(e) => update('scaleType', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="cover">Cover</option>
               <option value="contain">Contain</option>
@@ -1286,7 +1291,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.scaleType || 'cover'}
               onChange={(e) => update('scaleType', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="cover">Cover</option>
               <option value="contain">Contain</option>
@@ -1298,7 +1303,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.aspectRatio || ''}
               onChange={(e) => update('aspectRatio', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="16:9"
             />
           </div>
@@ -1327,7 +1332,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                       newImages[idx] = { ...img, src: e.target.value }
                       update('images', newImages)
                     }}
-                    className="input-field flex-1 text-xs"
+                    className={darkInputClass}
                     placeholder="Image URL"
                   />
                   <input
@@ -1338,7 +1343,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                       newImages[idx] = { ...img, altText: e.target.value }
                       update('images', newImages)
                     }}
-                    className="input-field flex-1 text-xs"
+                    className={darkInputClass}
                     placeholder="Alt text"
                   />
                   <button
@@ -1367,7 +1372,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="photo_picker"
             />
           </div>
@@ -1377,7 +1382,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Upload Photos"
             />
           </div>
@@ -1387,7 +1392,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Select photos from gallery or camera"
             />
           </div>
@@ -1396,7 +1401,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.photoSource || 'camera_gallery'}
               onChange={(e) => update('photoSource', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="camera_gallery">Camera & Gallery</option>
               <option value="camera">Camera Only</option>
@@ -1409,7 +1414,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxFileSizeKb || 10240}
               onChange={(e) => update('maxFileSizeKb', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="10240"
             />
           </div>
@@ -1419,7 +1424,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.minUploadedPhotos || 0}
               onChange={(e) => update('minUploadedPhotos', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               min="0"
               max="30"
             />
@@ -1430,7 +1435,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxUploadedPhotos || 10}
               onChange={(e) => update('maxUploadedPhotos', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               min="1"
               max="30"
             />
@@ -1447,7 +1452,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="document_picker"
             />
           </div>
@@ -1457,7 +1462,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Upload Documents"
             />
           </div>
@@ -1467,7 +1472,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Select documents to upload"
             />
           </div>
@@ -1477,7 +1482,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxFileSizeKb || 10240}
               onChange={(e) => update('maxFileSizeKb', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="10240"
             />
           </div>
@@ -1487,7 +1492,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.minUploadedDocuments || 0}
               onChange={(e) => update('minUploadedDocuments', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               min="0"
               max="30"
             />
@@ -1498,7 +1503,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxUploadedDocuments || 10}
               onChange={(e) => update('maxUploadedDocuments', parseInt(e.target.value))}
-              className="input-field text-sm"
+              className={darkInputClass}
               min="1"
               max="30"
             />
@@ -1509,7 +1514,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={(el.allowedMimeTypes || []).join(', ')}
               onChange={(e) => update('allowedMimeTypes', e.target.value.split(',').map((s: string) => s.trim()))}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="application/pdf, image/jpeg, image/png"
             />
             <p className="text-xs text-slate-500 mt-1">Comma-separated list</p>
@@ -1526,7 +1531,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="navigation_list"
             />
           </div>
@@ -1536,7 +1541,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label || ''}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Navigation list label"
             />
           </div>
@@ -1546,7 +1551,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.description || ''}
               onChange={(e) => update('description', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="List description"
             />
           </div>
@@ -1581,7 +1586,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                       }
                       update('listItems', newItems)
                     }}
-                    className="input-field w-full text-xs"
+                    className={darkInputClass}
                     placeholder="Item title"
                   />
                   <input
@@ -1595,7 +1600,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                       }
                       update('listItems', newItems)
                     }}
-                    className="input-field w-full text-xs"
+                    className={darkInputClass}
                     placeholder="Item description"
                   />
                   <button
@@ -1623,7 +1628,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1632,7 +1637,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -1661,7 +1666,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1670,7 +1675,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1679,7 +1684,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="number"
               value={el.maxLength || ''}
               onChange={(e) => update('maxLength', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="4096"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1692,7 +1697,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.helperText || ''}
               onChange={(e) => update('helperText', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="E.g. Enter your comments"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1704,7 +1709,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.labelVariant || 'standard'}
               onChange={(e) => update('labelVariant', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="standard">Standard</option>
               <option value="floating">Floating</option>
@@ -1720,7 +1725,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.initValue || ''}
               onChange={(e) => update('initValue', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Default text"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1733,7 +1738,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={typeof el.errorMessage === 'string' ? el.errorMessage : ''}
               onChange={(e) => update('errorMessage', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Custom error message"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1772,7 +1777,8 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
+              placeholder="Dropdown label"
             />
           </div>
           <div>
@@ -1781,7 +1787,8 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.name}
               onChange={(e) => update('name', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
+              placeholder="dropdown_field"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -1810,7 +1817,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.label}
               onChange={(e) => update('label', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             />
           </div>
           <div>
@@ -1818,7 +1825,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
             <select
               value={el.action}
               onChange={(e) => update('action', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
             >
               <option value="navigate">Navigate to next screen</option>
               <option value="complete">Complete flow</option>
@@ -1831,7 +1838,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
                 type="text"
                 value={el.nextScreen ?? ''}
                 onChange={(e) => update('nextScreen', e.target.value)}
-                className="input-field text-sm"
+                className={darkInputClass}
                 placeholder="e.g., RATE"
               />
             </div>
@@ -1842,7 +1849,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.leftCaption || ''}
               onChange={(e) => update('leftCaption', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Left side caption"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1855,7 +1862,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.centerCaption || ''}
               onChange={(e) => update('centerCaption', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Center caption"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1868,7 +1875,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.rightCaption || ''}
               onChange={(e) => update('rightCaption', e.target.value)}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Right side caption"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1893,7 +1900,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
               type="text"
               value={el.payloadKeys.join(', ')}
               onChange={(e) => update('payloadKeys', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-              className="input-field text-sm"
+              className={darkInputClass}
               placeholder="Choose_one, Leave_a_comment"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -1915,7 +1922,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
     //           type="text"
     //           value={el.condition}
     //           onChange={(e) => update('condition', e.target.value)}
-    //           className="input-field text-sm font-mono"
+    //           className={darkInputClass}
     //           placeholder="${data.show_content}"
     //         />
     //         <p className="text-xs text-slate-500 mt-1">
@@ -1963,7 +1970,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
     //           type="text"
     //           value={el.value}
     //           onChange={(e) => update('value', e.target.value)}
-    //           className="input-field text-sm font-mono"
+    //           className={darkInputClass}
     //           placeholder="${data.user_type}"
     //         />
     //         <p className="text-xs text-slate-500 mt-1">
@@ -2025,7 +2032,7 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
     //                     newCases[idx] = { ...caseItem, case: e.target.value }
     //                     update('cases', newCases)
     //                   }}
-    //                   className="input-field flex-1 text-xs"
+    //                   className={darkInputClass}
     //                   placeholder="case_value"
     //                 />
     //                 <button
@@ -2068,11 +2075,31 @@ function renderFields(el: AnyElement, update: (field: string, value: any) => voi
 
 function OptionsEditor({ options, onChange }: { options: { id: string; title: string }[]; onChange: (v: { id: string; title: string }[]) => void }) {
   const addOption = () => {
-    onChange([...options, { id: `${options.length}_Option`, title: 'New Option' }])
+    onChange([...options, { id: `option_${options.length + 1}`, title: 'New Option' }])
+  }
+
+  // Auto-generate ID from title
+  const generateId = (title: string): string => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+      || `option_${Date.now()}` // Fallback if title is empty/invalid
   }
 
   const updateOption = (index: number, field: 'id' | 'title', value: string) => {
-    const updated = options.map((opt, i) => i === index ? { ...opt, [field]: value } : opt)
+    const updated = options.map((opt, i) => {
+      if (i === index) {
+        if (field === 'title') {
+          // Auto-generate ID when title changes
+          return { ...opt, title: value, id: generateId(value) }
+        } else {
+          return { ...opt, [field]: value }
+        }
+      }
+      return opt
+    })
     onChange(updated)
   }
 
@@ -2094,17 +2121,28 @@ function OptionsEditor({ options, onChange }: { options: { id: string; title: st
           <div key={idx} className="flex gap-2">
             <input
               type="text"
-              value={opt.id}
-              onChange={(e) => updateOption(idx, 'id', e.target.value)}
-              className="input-field flex-1 text-xs"
-              placeholder="ID"
+              value={opt.title}
+              onChange={(e) => updateOption(idx, 'title', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-200 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Option Title"
             />
             <input
               type="text"
-              value={opt.title}
-              onChange={(e) => updateOption(idx, 'title', e.target.value)}
-              className="input-field flex-1 text-xs"
-              placeholder="Title"
+              value={opt.id}
+              onChange={(e) => updateOption(idx, 'id', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-400 text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Auto-generated ID"
+              readOnly
+              title="Auto-generated from title (double-click to edit manually)"
+              onDoubleClick={(e) => {
+                e.currentTarget.readOnly = false
+                e.currentTarget.className = e.currentTarget.className.replace('text-slate-400', 'text-slate-200')
+                e.currentTarget.focus()
+              }}
+              onBlur={(e) => {
+                e.currentTarget.readOnly = true
+                e.currentTarget.className = e.currentTarget.className.replace('text-slate-200', 'text-slate-400')
+              }}
             />
             <button
               onClick={() => removeOption(idx)}
@@ -2116,6 +2154,9 @@ function OptionsEditor({ options, onChange }: { options: { id: string; title: st
           </div>
         ))}
       </div>
+      <p className="text-xs text-slate-500 mt-2">
+        IDs are auto-generated from titles. Double-click ID field to edit manually.
+      </p>
     </div>
   )
 }
