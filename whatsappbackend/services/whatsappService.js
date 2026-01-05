@@ -270,6 +270,223 @@ class WhatsAppService {
   }
 
   /**
+   * Create a new flow in WhatsApp Business Manager
+   */
+  async createFlow(flowName, categories = ['SIGN_UP']) {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${this.businessAccountId}/flows`;
+      
+      const payload = {
+        name: flowName.trim(),
+        categories: categories
+      };
+
+      console.log(`📤 Creating flow: ${flowName}`);
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('✅ Flow created successfully:', response.data);
+
+      return {
+        success: true,
+        flowId: response.data.id,
+        name: flowName,
+        status: 'DRAFT'
+      };
+
+    } catch (error) {
+      console.error('❌ Error creating flow:', error.response?.data || error.message);
+      throw new Error(`Failed to create flow: ${error.response?.data?.error?.message || error.message}`);
+    }
+  }
+
+  /**
+   * Update flow with builder JSON
+   */
+  async updateFlowWithBuilderJson(flowId, flowJson, flowName) {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${flowId}/assets`;
+      
+      const payload = {
+        name: flowName,
+        asset_type: 'FLOW_JSON',
+        flow_json: JSON.stringify(flowJson)
+      };
+
+      console.log(`📤 Updating flow ${flowId} with JSON`);
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('✅ Flow JSON updated successfully');
+
+      return {
+        success: true,
+        flowId: flowId,
+        assetId: response.data.id,
+        message: 'Flow JSON updated successfully'
+      };
+
+    } catch (error) {
+      console.error('❌ Error updating flow JSON:', error.response?.data || error.message);
+      throw new Error(`Failed to update flow JSON: ${error.response?.data?.error?.message || error.message}`);
+    }
+  }
+
+  /**
+   * Get all flows from WhatsApp Business Account
+   */
+  async getAllFlows() {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${this.businessAccountId}/flows`;
+      
+      console.log(`📤 Getting all flows`);
+
+      const response = await axios.get(url, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`
+        }
+      });
+
+      console.log('✅ Flows retrieved successfully:', response.data.data?.length || 0);
+
+      return {
+        success: true,
+        data: response.data.data || [],
+        paging: response.data.paging
+      };
+
+    } catch (error) {
+      console.error('❌ Error getting flows:', error.response?.data || error.message);
+      throw new Error(`Failed to get flows: ${error.response?.data?.error?.message || error.message}`);
+    }
+  }
+
+  /**
+   * Get flow details
+   */
+  async getFlowDetails(flowId) {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${flowId}`;
+      
+      console.log(`📤 Getting flow details: ${flowId}`);
+
+      const response = await axios.get(url, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`
+        }
+      });
+
+      console.log('✅ Flow details retrieved successfully');
+
+      return {
+        success: true,
+        ...response.data
+      };
+
+    } catch (error) {
+      console.error('❌ Error getting flow details:', error.response?.data || error.message);
+      throw new Error(`Failed to get flow details: ${error.response?.data?.error?.message || error.message}`);
+    }
+  }
+
+  /**
+   * Approve/publish a flow
+   */
+  async approveFlow(flowId) {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${flowId}`;
+      
+      const payload = {
+        status: 'PUBLISHED'
+      };
+
+      console.log(`📤 Approving flow: ${flowId}`);
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('✅ Flow approval submitted successfully');
+
+      return {
+        success: true,
+        flowId: flowId,
+        status: 'PUBLISHED',
+        message: 'Flow submitted for approval'
+      };
+
+    } catch (error) {
+      console.error('❌ Error approving flow:', error.response?.data || error.message);
+      
+      // Handle specific approval errors
+      const errorMessage = error.response?.data?.error?.message || error.message;
+      if (errorMessage.includes('review')) {
+        return {
+          success: false,
+          message: 'Flow submitted for WhatsApp review (24-72 hours)',
+          requiresReview: true
+        };
+      }
+      
+      throw new Error(`Failed to approve flow: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Delete a flow
+   */
+  async deleteFlow(flowId) {
+    this._validateCredentials();
+
+    try {
+      const url = `${this.baseUrl}/${flowId}`;
+      
+      console.log(`📤 Deleting flow: ${flowId}`);
+
+      const response = await axios.delete(url, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`
+        }
+      });
+
+      console.log('✅ Flow deleted successfully');
+
+      return {
+        success: true,
+        flowId: flowId,
+        message: 'Flow deleted successfully'
+      };
+
+    } catch (error) {
+      console.error('❌ Error deleting flow:', error.response?.data || error.message);
+      throw new Error(`Failed to delete flow: ${error.response?.data?.error?.message || error.message}`);
+    }
+  }
+
+  /**
    * Send document message
    */
   async sendDocument(phoneNumber, filePath, caption = '', filename = null) {
@@ -324,24 +541,52 @@ class WhatsAppService {
 const whatsappService = new WhatsAppService();
 
 /**
- * Send flow message (exported function)
+ * Create flow (exported function)
  */
-async function sendFlowMessage(phoneNumber, flowId, message) {
-  return await whatsappService.sendFlowMessage(phoneNumber, flowId, message);
+async function createFlow(flowName, categories) {
+  return await whatsappService.createFlow(flowName, categories);
 }
 
 /**
- * Send interactive message (exported function)
+ * Update flow with JSON (exported function)
  */
-async function sendInteractiveMessage(phoneNumber, interactive) {
-  return await whatsappService.sendInteractiveMessage(phoneNumber, interactive);
+async function updateFlowWithBuilderJson(flowId, flowJson, flowName) {
+  return await whatsappService.updateFlowWithBuilderJson(flowId, flowJson, flowName);
 }
 
 /**
- * Send text message (exported function)
+ * Get all flows (exported function)
  */
-async function sendTextMessage(phoneNumber, text) {
-  return await whatsappService.sendTextMessage(phoneNumber, text);
+async function getAllFlows() {
+  return await whatsappService.getAllFlows();
+}
+
+/**
+ * Get flow details (exported function)
+ */
+async function getFlowDetails(flowId) {
+  return await whatsappService.getFlowDetails(flowId);
+}
+
+/**
+ * Approve flow (exported function)
+ */
+async function approveFlow(flowId) {
+  return await whatsappService.approveFlow(flowId);
+}
+
+/**
+ * Delete flow (exported function)
+ */
+async function deleteFlow(flowId) {
+  return await whatsappService.deleteFlow(flowId);
+}
+
+/**
+ * Get flow analytics (exported function)
+ */
+async function getFlowAnalytics(flowId, period) {
+  return await whatsappService.getFlowAnalytics(flowId, period);
 }
 
 /**
@@ -364,5 +609,12 @@ module.exports = {
   sendTextMessage,
   sendDocument,
   testWhatsAppConnection,
+  createFlow,
+  updateFlowWithBuilderJson,
+  getAllFlows,
+  getFlowDetails,
+  approveFlow,
+  deleteFlow,
+  getFlowAnalytics,
   whatsappService
 };
