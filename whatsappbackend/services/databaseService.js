@@ -431,6 +431,29 @@ class DatabaseService {
     }
   }
 
+  async updateFlow(id, data) {
+    try {
+      return await this.prisma.flow.update({
+        where: { id },
+        data
+      });
+    } catch (error) {
+      logger.error('Error updating flow:', error);
+      throw error;
+    }
+  }
+
+  async deleteFlow(flowId) {
+    try {
+      return await this.prisma.flow.delete({
+        where: { flowId }
+      });
+    } catch (error) {
+      logger.error('Error deleting flow:', error);
+      throw error;
+    }
+  }
+
   // Form Submission Management
   async createFormSubmission(data) {
     try {

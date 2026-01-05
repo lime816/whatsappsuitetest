@@ -95,9 +95,14 @@ model Flow {
   flowId      String     @unique @map("flow_id") // WhatsApp Flow ID
   name        String
   description String?
-  version     String?
+  version     String?    @default("7.3") // Flow JSON version
   status      FlowStatus @default(DRAFT)
-  flowData    Json?      @map("flow_data") // Store flow configuration
+  flowData    Json?      @map("flow_data") // Store complete flow configuration
+  screens     Json?      // Store original screen data from frontend
+  whatsappJson Json?     @map("whatsapp_json") // Generated WhatsApp Flow JSON
+  syncStatus  String?    @default("PENDING") @map("sync_status") // PENDING, SYNCED, FAILED
+  syncError   String?    @map("sync_error") // Error message if sync failed
+  lastSyncAt  DateTime?  @map("last_sync_at") // When last synced with WhatsApp
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
@@ -205,6 +210,8 @@ enum TriggerType {
 
 enum FlowStatus {
   DRAFT     @map("draft")
+  SYNCED    @map("synced")     // Successfully synced with WhatsApp
+  SYNC_FAILED @map("sync_failed") // Failed to sync with WhatsApp
   PUBLISHED @map("published")
   ARCHIVED  @map("archived")
 }
